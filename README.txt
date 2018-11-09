@@ -1,10 +1,17 @@
 
- Application API: WEB & C
+ THANKS TO:
+ ----------------------------------------------
 
-   Version: 0.1.0
+ 01 : God the creator of the heavens and the earth in the name of Jesus Christ.
 
- USAGE WEB:
-   index.html
+ ----------------------------------------------
 
- USAGE Node WebKit(see package.json):
-   nw ./
+ Application API:
+
+ To compile type:
+   make
+   gcc program.c -o program libapp.a -lSDL -Wall
+
+
+ BY: Francisco - gokernel@hotmail.com
+
