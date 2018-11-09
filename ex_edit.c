@@ -7,11 +7,11 @@ OBJECT *ed;
 
 void CreateInterface (void) {
 
-    ed = app_NewEdit (NULL, ID_EDIT1, 5, 5, "Editor PRIMEIRO\n", 5000);
+    ed = app_NewEdit (NULL, ID_EDIT1, 20, 20, "Editor PRIMEIRO\n", 5000);
 
-    app_NewEdit (NULL, ID_EDIT2, 5, 320, "Editor Segundo ... HELLO Isto eh um\n teste TESTANDO\n", 5000);
+    app_NewEdit (NULL, ID_EDIT2, 20, 100, "Editor Segundo ... HELLO Isto eh um\n teste TESTANDO\n", 5000);
 
-    app_NewButton (NULL, 0, 350, 5, "Button Hello_a\n");
+    app_NewButton (NULL, 0, 350, 50, "Button\n");
     
     app_SetFocus (ed);
 }
