@@ -39,7 +39,7 @@ int proc_button (OBJECT *o, int msg, int value) {
             DrawRect (screen, r.x+1, r.y+1, r.w-3, r.h-3, COLOR_ORANGE);
 
         int x = (r.x + r.w / 2) - ((strlen(data->text)*8)/2);
-        DrawText (screen, data->text, x+2, (r.y+r.h/2)-6, data->fg);
+        DrawText (screen, data->text, x+1, (r.y+r.h/2)-6, data->fg);
 
         } break;
 

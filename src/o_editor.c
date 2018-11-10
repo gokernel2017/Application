@@ -14,6 +14,7 @@ typedef struct {
     char  FileName [EDITOR_FILE_NAME_SIZE];
     int   pos;      // position in text: text [ pos ];
     int   col;      // x cursor position
+    int   scroll;
     int   line;
     int   line_top; // first line displayed
     int   line_pos;
@@ -46,16 +47,16 @@ static void DrawLineNumber (OBJECT *o) {
 
 int proc_editor (OBJECT *o, int msg, int value) {
     data = app_GetData (o);
+    app_GetRect (o, &r);
+    char *s = data->text;
 
     switch (msg) {
 
     case MSG_DRAW: {
-        char *s = data->text;
         char buf[20];
         int line_top = 0, i = 1;
         int pos_x, pos_y;
 
-        app_GetRect (o, &r);
         SDL_FillRect (screen, &r, data->bg); // bg
         DrawRect (screen, r.x, r.y, r.w, r.h, COLOR_ORANGE); // border
         DrawLineNumber (o);
@@ -87,9 +88,9 @@ int proc_editor (OBJECT *o, int msg, int value) {
             pos_x += 8;
 
             if (*s == '\n') { // <-- New line
+                // draw lines numbers
                 sprintf (buf, "%04d", data->line_top + i); i++;
                 DrawText (screen, buf, r.x+4, pos_y, COLOR_ORANGE);
-printf ("line:( %s )\n", buf);
 
                 data->line_count++;
                 pos_x = r.x + 70;// (ox + 5) - data->scroll*8;
@@ -104,8 +105,9 @@ printf ("line:( %s )\n", buf);
             s++;
         }
 
-        //AS_rect ( ASbuf,  (ox+4+data->col*8) -data->scroll*8, 4+oy+data->line_pos*15, (ox+13+data->col*8) -data->scroll*8, 5+oy+data->line_pos*15+15, data->fg);
-        DrawRect (screen,  (r.x+69+data->col*8), r.y+4+data->line_pos*15, 9, 14, COLOR_WHITE);
+        // draw cursor position
+        DrawRect (screen,  (r.x+69+data->col*8), r.y+4+data->line_pos * LINE_DISTANCE, 9, 14, COLOR_WHITE);
+        DrawVline (screen, (r.x+69+data->col*8), r.y, r.y+r.h, COLOR_WHITE);
 /*
         if (sel) {
             // Cursor ...
@@ -119,7 +121,32 @@ printf ("line:( %s )\n", buf);
         return 1; // object focused ok
 
     case MSG_KEY: {
-        printf ("KEY(%c) = TEXT(%s)\n", value, data->text);
+        if (value == SDLK_LEFT && data->col > 0) { // <--
+//          if(text[data->pos]=='\t') data->col--;
+          data->pos--; data->col--; if (data->scroll > 0) data->scroll--;
+
+        }
+        else if (value == SDLK_RIGHT && data->pos < data->len) { // -->
+            if (s[data->pos] == '\n') { // if "current char" = new line
+
+/*
+              // if last line(DISPLAYED)
+              if ( (data->line_pos*15)+30 >= O->h-12 && (data->line_pos*15)+30 <= O->h+12 )
+                  data->line_top++;
+              else
+                  data->line_pos++;
+*/
+
+              data->line++; data->col = 0; // CURSOR(Linha AZUL) no inicio da LINHA
+          } else {
+//              if(text[data->pos]=='\t') data->col++;
+              data->col++; if (data->col*8 > r.w-40) data->scroll++;
+          }
+
+            data->pos++;
+        }
+
+        return RET_CALL;
         } break; // case MSG_KEY:
 
     }// switch (msg)
@@ -143,9 +170,12 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     data->FileName[0] = 0;
     data->pos = 0;
     data->col = 0;
+    data->scroll = 0;
     data->line = 0;
     data->line_top = 0;
-    data->len = 0;
+    data->line_pos = 0;
+    data->line_count = 0;
+    data->len = strlen (data->text);
     data->size = size; // memory size text alloc
     data->color = COLOR_ORANGE;
     data->bg = 0;

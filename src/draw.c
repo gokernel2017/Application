@@ -29,6 +29,32 @@ static const unsigned char fixed_font[14][764] = {
   "                                   xx                               xx    xx                       xx                                                                                                                      xx                                                                                                                                                                                xx                                                                           xx                xx                                                                               xx                     xx                                           xx          xx                                                            xx               xx     xx     xx               ",
   "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          xxxx            xxxx          xxxxxxxx                                                         xxxxx                   xxxx                                            xx          xx                                                         xxxx                       xx                      ",
 };
+unsigned char pal[24][3] = {
+  {197, 40, 0},
+  {255, 178, 156},
+  {255, 178, 156},
+  {255, 157, 131},
+  {255, 133, 98},
+  {246, 109, 74},
+  {246, 85, 41},
+  {246, 60, 8},
+  {246, 72, 24},
+  {246, 85, 32},
+  {246, 97, 41},
+  {246, 109, 49},
+  {246, 121, 57},
+  {246, 129, 74},
+  {255, 141, 82},
+  {255, 153, 90},
+  {255, 165, 98},
+  {255, 178, 106},
+  {255, 190, 123},
+  {255, 202, 131},
+  {255, 214, 139},
+  {255, 222, 148},
+  {255, 234, 156},
+  {255, 234, 156}
+};
 
 void DrawPixel (BMP *bmp, int x, int y, int color) {
     int bpp;
@@ -198,4 +224,13 @@ void DrawText (BMP *bmp, char *text, int x, int y, int color) {
     }
 }
 
+void DrawWindow (SDL_Rect *r) {
+    int border = MRGB(pal[0][0], pal[0][1], pal[0][2]);
+    int i;
+    for (i = 1; i < 24; i++)
+        DrawHline (screen, r->x+1, r->y+2+i, r->x+r->w-2, MRGB(pal[i][0], pal[i][1], pal[i][2]));
+    DrawHline (screen, r->x+1, r->y+2+i, r->x+r->w-2, border);
+    DrawRectR (screen, r->x, r->y, r->w, r->h, border);
+//SDL_MapRGB ( ASbuf->format, r, g, b )
+}
 

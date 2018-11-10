@@ -90,13 +90,18 @@ static int
     mx, my // mouse_x, mouse_y
     ;
 
+void _call_ (void) {
+    SDL_Delay (10);
+}
+void (*CallBack) (void) = _call_;
+
 static int proc_null (OBJECT *o, int msg, int i) {
     return 0;
 }
 
 int app_Init (int argc, char **argv) {
     static int init = 0;
-    int w = 0, h = 0, bpp = 16, flags = SDL_HWSURFACE, i;
+    int w = 0, h = 0, flags = SDL_HWSURFACE, i;
 
     if (init) return 1;
     init = 1;
@@ -118,7 +123,7 @@ int app_Init (int argc, char **argv) {
     if (w <= 0) w = 800;
     if (h <= 0) h = 600;
 
-    screen = SDL_SetVideoMode (w, h, bpp, flags);
+    screen = SDL_SetVideoMode (w, h, 16, flags);
 
     SDL_EnableUNICODE (1);
     SDL_EnableKeyRepeat (SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL); // For keypressed
@@ -127,11 +132,14 @@ int app_Init (int argc, char **argv) {
 
     atexit (SDL_Quit);
 
+printf ("color_white: %d\n", MRGB(255,255,255));
+
     return 1;
 }
 
 void app_UpdateGui (OBJECT *o) {
     SDL_Event ev;
+    int ret;
 
     while (SDL_PollEvent(&ev)) {
     switch (ev.type) {
@@ -155,8 +163,6 @@ void app_UpdateGui (OBJECT *o) {
         //
         //-----------------------------------------------
         if (mouse_find != current) {
-            int ret;
-
             // MSG_ENTER
             if (mouse_find && (ret = mouse_find->proc (mouse_find,MSG_ENTER,0))) {
                 // redraw and update
@@ -245,15 +251,23 @@ void app_UpdateGui (OBJECT *o) {
         }
 
         if (object_focus && object_focus->visible && object_focus->focus) {
-            object_focus->proc (object_focus, MSG_KEY, key);
+            if ((ret = object_focus->proc (object_focus, MSG_KEY, key))) {
+                // redraw and update
+                object_focus->proc (object_focus, MSG_DRAW, 1);
+                SDL_UpdateRect (screen, object_focus->rect.x, object_focus->rect.y, object_focus->rect.w, object_focus->rect.h);
+                if (ret == RET_CALL && object_focus->call) {
+                    arg.msg = MSG_KEY;
+                    arg.key = key;
+                    object_focus->call (&arg);
+printf ("editor call\n");
+                }
+            }
         }
 
         break; // case SDL_KEYDOWN:
 
     }// switch (ev.type)
     }// while (SDL_PollEvent(&ev))
-
-    SDL_Delay (10);
 
     if (state==RET_REDRAW_ALL) {
         state = 0;
@@ -267,6 +281,9 @@ void app_UpdateGui (OBJECT *o) {
 
 void app_Run (void (*call) (void)) {
 
+    if (call)
+        CallBack = call;
+
     app_UpdatePos (root);
     state = RET_REDRAW_ALL;
     quit = 0;
@@ -274,17 +291,19 @@ void app_Run (void (*call) (void)) {
     while (!quit) {
 
         app_UpdateGui (root);
+        CallBack ();
 
     }
 }
 
 static void draw_bg (void) {
     int color1 = SDL_MapRGB (screen->format, 254,238,204);
-//        int color2 = SDL_MapRGB (screen->format, 255,219,164);
+    int color2 = SDL_MapRGB (screen->format, 0,130,214);
     int hh = screen->h/3;
 
     SDL_FillRect (screen, &(SR){ 1, 1, screen->w-1, hh }, color1);
-    SDL_FillRect (screen, &(SR){ 1, hh, screen->w-1, hh }, COLOR_BLUE2);
+//    SDL_FillRect (screen, &(SR){ 1, hh, screen->w-1, hh }, COLOR_BLUE2);
+    SDL_FillRect (screen, &(SR){ 1, hh, screen->w-1, hh }, color2);
     SDL_FillRect (screen, &(SR){ 1, hh+hh, screen->w-1, hh }, color1);
 
     SDL_FillRect (screen, &(SR){ 1, hh-20, screen->w-1, 20 }, COLOR_ORANGE);
@@ -449,11 +468,13 @@ int proc_dialog (OBJECT *o, int msg, int value) {
         char *s = dialog_data.text;
 
         app_GetRect(o, &r);
-        SDL_FillRect (screen, &r, dialog_data.bg);
+        SDL_FillRect (screen, &(SR){ r.x+1, r.y+1, r.w-2, r.h-2 }, dialog_data.bg);
         DrawRectR (screen, r.x, r.y, r.w, r.h, dialog_data.fg);
-        x = r.x+10;
+        DrawRect (screen, r.x+1, r.y+1, r.w-3, r.h-3, dialog_data.fg);
+        //DrawWindow (&r);
+        x = r.x+12;
         while (*s) {
-            DrawChar (screen, *s, x, r.y+10, dialog_data.fg);
+            DrawChar (screen, *s, x, r.y+12, dialog_data.fg);
             x += 8;
             if (x > r.x+r.w) break;
             s++;
@@ -486,10 +507,10 @@ int app_ShowDialog (char *text) {
 printf ("Criando DIALOG\n");
             dialog_data.fg = COLOR_ORANGE;
             dialog_data.bg = COLOR_WHITE;
-            dialog = app_ObjectNew (proc_dialog,(screen->w/2)-250,(screen->h/2)-60,500,120,0,0,&dialog_data);
+            dialog = app_ObjectNew (proc_dialog,(screen->w/2)-250,(screen->h/2)-50,500,100,0,0,&dialog_data);
             app_ObjectAdd (dialog_root, dialog);
-            dlgYES = app_NewButton (dialog, ID_YES, 140, 50, "YES");
-            dlgNO  = app_NewButton (dialog, ID_NO,  260, 50, "NO");
+            dlgYES = app_NewButton (dialog, ID_YES, 142, 55, "YES");
+            dlgNO  = app_NewButton (dialog, ID_NO,  258, 55, "NO");
             app_SetCall (dlgYES, call_dialog);
             app_SetCall (dlgNO, call_dialog);
         }
@@ -517,6 +538,7 @@ printf ("Criando DIALOG\n");
         while (!dialog_quit) {
 
             app_UpdateGui (dialog_root);
+            SDL_Delay (10);
 
         }
         key = 0;

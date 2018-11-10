@@ -78,6 +78,7 @@ struct ARG { // OBJECT Function Callback Argument
     int   id;
     int   x;
     int   y;
+    int   key;
 };
 
 struct TRect {
@@ -124,13 +125,14 @@ LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *t
 //
 // draw.c | Drawing Primitive:
 //
-LIBIMPORT void  DrawPixel (BMP *bmp, int x, int y, int color);
-LIBIMPORT void  DrawHline (BMP *bmp, int x1, int y, int x2, int color);
-LIBIMPORT void  DrawVline (BMP *bmp, int x, int y1, int y2, int color);
-LIBIMPORT void  DrawRect  (BMP *bmp, int x, int y, int w, int h, int color);
-LIBIMPORT void  DrawRectR (BMP *bmp, int x, int y, int w, int h, int color);
-LIBIMPORT void  DrawChar  (BMP *bmp, char ch, int x, int y, int color);
-LIBIMPORT void  DrawText  (BMP *bmp, char *text, int x, int y, int color);
+LIBIMPORT void  DrawPixel   (BMP *bmp, int x, int y, int color);
+LIBIMPORT void  DrawHline   (BMP *bmp, int x1, int y, int x2, int color);
+LIBIMPORT void  DrawVline   (BMP *bmp, int x, int y1, int y2, int color);
+LIBIMPORT void  DrawRect    (BMP *bmp, int x, int y, int w, int h, int color);
+LIBIMPORT void  DrawRectR   (BMP *bmp, int x, int y, int w, int h, int color);
+LIBIMPORT void  DrawChar    (BMP *bmp, char ch, int x, int y, int color);
+LIBIMPORT void  DrawText    (BMP *bmp, char *text, int x, int y, int color);
+LIBIMPORT void  DrawWindow  (SDL_Rect *rect);
 
 #ifdef __cplusplus
 }
