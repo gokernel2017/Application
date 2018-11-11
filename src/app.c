@@ -54,6 +54,7 @@ static void app_UpdatePos (OBJECT *obj);
 //-----------------------------------------------
 //
 SDL_Surface *screen;
+int key_ctrl;
 
 DATA_DIALOG dialog_data;
 
@@ -246,6 +247,9 @@ void app_UpdateGui (OBJECT *o) {
         if ((key = ev.key.keysym.unicode)==0)
             key = ev.key.keysym.sym;
 
+        if (key == SDLK_RCTRL || key == SDLK_LCTRL)
+            key_ctrl = 1;
+
         if (key == SDLK_F12 && o == root) {
             quit = app_ShowDialog("Application API - Exit ?");
         }
@@ -265,6 +269,16 @@ printf ("editor call\n");
         }
 
         break; // case SDL_KEYDOWN:
+
+    case SDL_KEYUP: {
+        int k;
+        if ((k = ev.key.keysym.unicode)==0)
+            k = ev.key.keysym.sym;
+
+        if (k == SDLK_RCTRL || k == SDLK_LCTRL)
+            key_ctrl = 0;
+
+        } break; // case SDL_KEYUP:
 
     }// switch (ev.type)
     }// while (SDL_PollEvent(&ev))
@@ -443,6 +457,10 @@ static void app_UpdatePos (OBJECT *obj) {
     }
 }
 
+void app_SetSize (OBJECT *o, int w, int h) {
+    o->rect.w = w;
+    o->rect.h = h;
+}
 
 void app_SetFocus (OBJECT *o) {
     if (o && o->visible) {
@@ -482,11 +500,11 @@ int proc_dialog (OBJECT *o, int msg, int value) {
         return 0;
     }
     if (msg == MSG_KEY) {
-        if (value == 'Y' || value == 'y') {
+        if (value == 'Y' || value == 'y' || value == SDLK_RETURN) {
             dialog_quit = 1;
             dialog_ret = 1;
         }
-        if (value == 'N' || value == 'n') {
+        if (value == 'N' || value == 'n' || value == SDLK_ESCAPE) {
             dialog_quit = 1;
             dialog_ret = 0;
         }
@@ -556,4 +574,34 @@ printf ("Criando DIALOG\n");
 
     return dialog_ret;
 }
+
+char * app_FileOpen (const char *FileName) {
+    FILE *fp;
+
+    if ((fp = fopen (FileName, "r")) != NULL) {
+        char *str;
+        int size, i;
+
+        fseek(fp, 0, SEEK_END);
+        size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+
+        str = (char *)malloc (size + 5);
+        if(!str){
+            fclose (fp);
+            return NULL;
+        }
+        i = fread(str, 1, size, fp);
+        fclose(fp);
+        str[i] = 0;
+        str[i+1] = 0;
+
+        return str;
+    }
+    else printf ("File Not Found: '%s'\n", FileName);
+
+    return NULL;
+}
+
+
 

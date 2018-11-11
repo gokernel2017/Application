@@ -91,6 +91,7 @@ struct TRect {
 //-----------------------------------------------
 //
 LIBIMPORT SDL_Surface *screen;
+LIBIMPORT int key_ctrl;
 
 //-----------------------------------------------
 //-----------------  PUBLIC API  ----------------
@@ -103,7 +104,9 @@ LIBIMPORT void      app_Run           (void (*call) (void));
 LIBIMPORT void    * app_GetData       (OBJECT *o);
 LIBIMPORT void      app_GetRect       (OBJECT *o, SDL_Rect *rect);
 LIBIMPORT OBJECT  * app_GetByID       (int id);
+LIBIMPORT char    * app_FileOpen      (const char *FileName);
 LIBIMPORT void      app_SetFocus      (OBJECT *o);
+LIBIMPORT void      app_SetSize       (OBJECT *o, int w, int h);
 LIBIMPORT int       app_Focused       (OBJECT *o);
 LIBIMPORT void      app_SetCall       (OBJECT *o, void (*call) (ARG *arg));
 LIBIMPORT void      app_ObjectAdd     (OBJECT *o, OBJECT *sub);
@@ -121,6 +124,11 @@ LIBIMPORT OBJECT * app_ObjectNew (
 LIBIMPORT OBJECT * app_NewButton  (OBJECT *parent, int id, int x, int y, char *text);
 LIBIMPORT OBJECT * app_NewEdit    (OBJECT *parent, int id, int x, int y, char *text, int size);
 LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *text, int size);
+
+// Editor Functions:
+//
+LIBIMPORT void app_EditorSetFileName (OBJECT *o, char *FileName);
+
 
 //
 // draw.c | Drawing Primitive:
