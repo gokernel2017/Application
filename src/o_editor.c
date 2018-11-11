@@ -13,32 +13,6 @@
 #define COLOR_COMMENT           63519
 #define CTRL_KEY_S              19
 
-/*
-
-        if (key_ctrl) {
-            if (key == CTRL_KEY_R) { // RUN SCRIPT
-                printf ("%d | TEXT(%s)\n", strlen(ed->text), ed->text);
-            }
-            else if (key == CTRL_KEY_S) {
-                if (*ed->FileName) {
-                    FILE *fp;
-                    char *s = ed->text;
-                    if ((fp = fopen (ed->FileName, "w")) != NULL) {
-                        while (*s) {
-                            fputc (*s, fp);
-                            s++;
-                        }
-                        fclose (fp);
-                        printf ("\nSaved: '%s'\n", ed->FileName);
-                    }
-                }
-            }
-            printf ("CTRL + KEY = %d\n", key);
-            return;
-        }
-
-*/
-
 typedef struct {
     char  *text; // use malloc (size)
     char  FileName [EDITOR_FILE_NAME_SIZE];
