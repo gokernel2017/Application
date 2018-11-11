@@ -37,6 +37,9 @@ typedef struct {
 DATA_EDITOR *data;
 SDL_Rect r;
 
+int comment_line;
+int comment;
+
 void InsertChar (char *string, register int index, int ch) {
   register int x = strlen(string);
 
@@ -69,13 +72,14 @@ int proc_editor (OBJECT *o, int msg, int value) {
 //        int pos_x = (r.x + 5) - data->scroll*8;
         int pos_y = r.y + 5;
         int color = data->color;
-        int comment = 0; // commentary text color
 
         SDL_FillRect (screen, &r, data->bg); // bg
         SDL_FillRect (screen, &(SR){ r.x, r.y, 61, r.h}, MRGB(240,240,240)); // lines numbers bg
         DrawRect (screen, r.x, r.y, r.w, r.h, COLOR_ORANGE); // border
 
         data->line_count = 0;
+        comment = comment_line = 0;
+
         //-------------------------------
         // Get the FIRST char DISPLAYED
         // ed->line_count,
@@ -86,6 +90,14 @@ int proc_editor (OBJECT *o, int msg, int value) {
                 if (line_top != data->line_top) line_top++;
                 data->line_count++;
             }
+            // set text color: comment block
+            if (s[0]=='/' && s[1]=='*') {
+                color = comment = COLOR_COMMENT;
+            } else if (comment && s[0]=='/' && s[-1]=='*') {
+                comment = 0;
+                color = data->color;
+            }
+
             s++;
         }
 
@@ -94,15 +106,23 @@ int proc_editor (OBJECT *o, int msg, int value) {
             if (pos_y > (r.y + r.h)-LINE_DISTANCE)
           break;
 
-            if (s[0]=='/' && s[1]=='/')
-                comment = 1;
+            // comment block
+            if (s[0]=='/' && s[1]=='*') {
+                color = comment = COLOR_COMMENT;
+            }
 
-            if (comment) {
-                color = COLOR_COMMENT;//MRGB(100,100,100);
-                if (*s=='\n')
-                    comment = 0;
-            } else {
-                color = COLOR_ORANGE;
+            // comment block
+            if (comment == 0) {
+                if (s[0]=='/' && s[1]=='/')
+                    comment_line = 1;
+
+                if (comment_line) {
+                    color = COLOR_COMMENT;
+                    if (*s=='\n') {
+                        comment_line = 0;
+                        color = data->color;
+                    }
+                }
             }
 
             // area of editor
@@ -111,6 +131,17 @@ int proc_editor (OBJECT *o, int msg, int value) {
             }
             pos_x += 8;
 
+            // UNDO COLOR | comment block
+            if (comment && s[0]=='/' && s[-1]=='*') {
+                comment = 0;
+                color = data->color;
+            }
+/*
+            // folding rect
+            if (*s == '{' && !comment && !comment_line) {
+                DrawRect (screen, r.x+42, pos_y-1, 14, 14, COLOR_ORANGE); // folding
+            }
+*/
             if (*s == '\n') { // <-- New line
                 // draw lines numbers
                 sprintf (buf, "%04d", data->line_top + i); i++;
@@ -122,7 +153,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
 //                pos_x = (r.x + 5) - data->scroll*8;
                 pos_y += LINE_DISTANCE;
             }
-
+            
             s++;
         }
         // Get "ed->line_count": continue incremeting "count_ch" at END(str)
