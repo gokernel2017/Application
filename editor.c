@@ -47,7 +47,7 @@ int main (int argc, char **argv) {
         if (text)
             free (text);
     }
-    printf ("Exiting With Sucess:\n");
+    printf ("Exiting With Sucess: %d\n", MRGB(255,128,0));
     return 0;
 }
 

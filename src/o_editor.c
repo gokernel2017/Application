@@ -10,7 +10,33 @@
 #define LINE_DISTANCE           17
 //#define LINE_DISTANCE           15
 
-#define COLOR_COMMENT           63519
+// To state of sintax color
+// CODE FROM: SciTE100 Editor 1.0
+#define STATE_DEFAULT       0
+#define STATE_COMMENT       1
+#define STATE_LINE_COMMENT  2
+#define STATE_DOC_COMMENT   3
+#define STATE_NUMBER        4
+#define STATE_WORD          5
+#define STATE_STRING        6
+#define STATE_CHAR          7
+#define STATE_PUNCT         8
+#define STATE_PRE_PROC      9
+#define STATE_OPERATOR      10
+#define STATE_IDENTIFIER    11
+
+//-----------------------------------------------
+// text color state:
+//-----------------------------------------------
+//
+#define C_DEFAULT               64515 // orange
+#define C_COMMENT               63519
+#define C_COMMENT_LINE          63518
+#define C_STRING                65504
+#define C_PRE_PROC              2016
+
+#define C_WORD                  2047
+
 #define CTRL_KEY_S              19
 
 typedef struct {
@@ -30,15 +56,49 @@ typedef struct {
     int   len;      // string len
     int   size;     // memory size text alloc
     int   saved;
-    int   color;    // text color
     int   bg;       // bg color
 }DATA_EDITOR;
 
-DATA_EDITOR *data;
-SDL_Rect r;
 
-int comment_line;
-int comment;
+static DATA_EDITOR  *data;
+static char         *str;
+static SDL_Rect     r;
+static int          state, color;
+static int          is_reserved_word;
+int C_RED = 12345;
+
+inline char iswordchar (char ch) {
+    return isalnum(ch) || ch == '.' || ch == '_';
+}
+
+//-------------------------------------------------------------------
+// This function is part of Scintilla:
+//
+// Copyright 1998-1999 by Neil Hodgson <neilh@hare.net.au>
+// The License.txt file describes the conditions under which this software may be distributed.
+//
+// PROJECT  : SciTE100 Editor - 1.0
+// FILE     : KeyWords.cc
+// FUNCTION : inline bool isoperator(char ch)
+//
+//-------------------------------------------------------------------
+//
+inline char isperator (char ch) {
+
+  if (isalnum(ch)) return 0;
+
+	// '.' left out as it is used to make up numbers
+  if (ch == '%' || ch == '^' || ch == '&' || ch == '*' ||
+     ch == '(' || ch == ')' || ch == '-' || ch == '+' ||
+     ch == '=' || ch == '|' || ch == '{' || ch == '}' ||
+     ch == '[' || ch == ']' || ch == ':' || ch == ';' ||
+     ch == '<' || ch == '>' || ch == ',' || ch == '/' ||
+     ch == '?' || ch == '!' || ch == '.' || ch == '~'
+  )
+	return 1;
+
+	return 0;
+}
 
 void InsertChar (char *string, register int index, int ch) {
   register int x = strlen(string);
@@ -57,10 +117,58 @@ void app_EditorSetFileName (OBJECT *o, char *FileName) {
     }
 }
 
+static void SetTextColor (void) {
+    register char ch   = str[0];
+    register char next = str[1];
+
+    //---------------------------------------------------------------
+    // CODE BASED: SciTE100 Editor 1.0
+    //
+    //     FILE: KeyWords.cc
+    // FUNCTION: static void ColouriseCppDoc ( ... );
+    //
+    //   state := text_color
+    //
+    //---------------------------------------------------------------
+    //
+    if (state == STATE_DEFAULT) {
+
+        color = C_DEFAULT;
+
+        if (ch == '/' && next == '*') {  // COMMENT
+            state = STATE_COMMENT; color = C_COMMENT;
+        } else if (ch == '/' && next == '/') {  // LINE_COMMENT
+            state = STATE_LINE_COMMENT; color = C_COMMENT;
+        } else if (ch == '\"') { // STRING
+            state = STATE_STRING; color = C_STRING;
+        } else if (ch =='\'') { // CHAR
+            state = STATE_CHAR; color = C_RED;
+        } else if (ch == '#') { // PRE_PROC
+            state = STATE_PRE_PROC; color = C_PRE_PROC;
+        }
+    } else {
+        if (state == STATE_PRE_PROC){
+            if ((ch == '\r' || ch == '\n') && (str[-1] != '\\')) {
+                state = STATE_DEFAULT; color = C_DEFAULT;
+            }
+            if (ch=='/' && next=='/') {
+                state = STATE_LINE_COMMENT; color = C_COMMENT;
+            }
+        } else if (state==STATE_COMMENT && str[-2]=='*' && str[-1]=='/'){
+            state = STATE_DEFAULT; color = C_DEFAULT;
+        } else if (state==STATE_LINE_COMMENT && (ch == '\r' || ch == '\n')) {
+            state = STATE_DEFAULT; color = C_DEFAULT;
+        } else if (state == STATE_STRING && (ch == '"'|| ch=='\n')) {
+            state = STATE_DEFAULT; //color = data->color;
+        } else if (state == STATE_CHAR && (ch =='\'' || ch=='\n')){
+            state = STATE_DEFAULT; color = C_DEFAULT;
+        }
+    }
+}
+
 int proc_editor (OBJECT *o, int msg, int value) {
     data = app_GetData (o);
-    char *s = data->text;
-
+    str = data->text;
     app_GetRect (o, &r);
 
     switch (msg) {
@@ -69,97 +177,104 @@ int proc_editor (OBJECT *o, int msg, int value) {
         char buf[50];
         int line_top = 0, i = 1;
         int pos_x = (r.x + 70) - data->scroll*8;
-//        int pos_x = (r.x + 5) - data->scroll*8;
         int pos_y = r.y + 5;
-        int color = data->color;
 
         SDL_FillRect (screen, &r, data->bg); // bg
         SDL_FillRect (screen, &(SR){ r.x, r.y, 61, r.h}, MRGB(240,240,240)); // lines numbers bg
         DrawRect (screen, r.x, r.y, r.w, r.h, COLOR_ORANGE); // border
 
         data->line_count = 0;
-        comment = comment_line = 0;
+        state = STATE_DEFAULT;
 
         //-------------------------------
         // Get the FIRST char DISPLAYED
         // ed->line_count,
         //-------------------------------
-        while (*s) {
-            if (line_top == data->line_top) break;
-            if (*s == '\n') { // <-- new line
-                if (line_top != data->line_top) line_top++;
+        while (*str) {
+            if (line_top == data->line_top)
+          break;
+            if (*str == '\n') { // <-- new line
                 data->line_count++;
+                if (line_top != data->line_top)
+                    line_top++;
             }
-            // set text color: comment block
-            if (s[0]=='/' && s[1]=='*') {
-                color = comment = COLOR_COMMENT;
-            } else if (comment && s[0]=='/' && s[-1]=='*') {
-                comment = 0;
-                color = data->color;
-            }
-
-            s++;
+            SetTextColor ();
+            str++;
         }
 
-        while (*s) {
+        // NOW DRAW THE TEXT ( DrawChar(...) )
+        //
+        while (*str) {
             // size h:
             if (pos_y > (r.y + r.h)-LINE_DISTANCE)
           break;
 
-            // comment block
-            if (s[0]=='/' && s[1]=='*') {
-                color = comment = COLOR_COMMENT;
-            }
+            SetTextColor();
 
-            // comment block
-            if (comment == 0) {
-                if (s[0]=='/' && s[1]=='/')
-                    comment_line = 1;
-
-                if (comment_line) {
-                    color = COLOR_COMMENT;
-                    if (*s=='\n') {
-                        comment_line = 0;
-                        color = data->color;
-                    }
-                }
-            }
-
-            // area of editor
+            // Draw char in area of editor
             if (pos_x < r.x+r.w-8) {
-                DrawChar(screen, *s, pos_x, pos_y, color);
+
+                if (state == STATE_DEFAULT) { // ! is state not STATE_COMMENT
+
+                  // CODE FROM: SciTE100 Editor 1.0
+                  // If == '(' or ')' or '-' or '+' or ',' or '.' ... etc
+                  if (isperator(*str))
+                      color = COLOR_WHITE;
+
+                    //------- Color RESERVEDs WORDs: Language C -------
+                    // Gets CHARs: SPACE, NEW LINE, '(', ';'
+                    // In START of RESERVED WORDs
+                    if (!is_reserved_word && !iswordchar(str[-1])) {
+
+                        // If text[ch] == (First char of RESERVEDs WORDs): [b]reak, [c]ase, [s]truct ... etc
+                        if ((*str >= 'a' && *str <= 'g') || *str=='i' || *str=='l' || *str=='o' || (*str >= 'r' && *str <= 'v') || *str=='w') {
+                            char *s = str;
+                            int count = 0, i;
+                            char word [20];
+                            char *WORDS[] = { "break","case","char","const","continue","default","do","double","else","enum","extern","float","for","goto","if","int","long","register","return","short","signed","sizeof","static","struct","switch","typedef","union","unsigned","void","volatile","while",
+                                              "and","end","function","in","local","or","repeat","then",0};
+                            while (*s) {
+                                word[count++] = *s++;
+                                if (!iswordchar(*s) || count > 8) break;
+                            }
+                            word[count] = 0;
+                            for (i = 0; WORDS[i]; i++)
+                                if (!strcmp(WORDS[i], word)) {
+                                    is_reserved_word = count; // <-- HERE: increment from size of WORD.
+                              break;
+                                }
+                        }
+
+                    }// if (!is_reserved_word && !iswordchar(str[-1]))
+                    if (is_reserved_word) {
+                        color = C_WORD; // Torn color of sintax
+                        is_reserved_word--;
+                    }
+
+                } // if (state == STATE_DEFAULT)
+
+                DrawChar (screen, *str, pos_x, pos_y, color);
             }
             pos_x += 8;
 
-            // UNDO COLOR | comment block
-            if (comment && s[0]=='/' && s[-1]=='*') {
-                comment = 0;
-                color = data->color;
-            }
-/*
-            // folding rect
-            if (*s == '{' && !comment && !comment_line) {
-                DrawRect (screen, r.x+42, pos_y-1, 14, 14, COLOR_ORANGE); // folding
-            }
-*/
-            if (*s == '\n') { // <-- New line
+            if (*str == '\n') { // <-- New line
                 // draw lines numbers
                 sprintf (buf, "%04d", data->line_top + i); i++;
                 DrawText (screen, buf, r.x+4, pos_y, COLOR_ORANGE);
 
                 data->line_count++;
-                //pos_x = r.x + 70;// (ox + 5) - data->scroll*8;
                 pos_x = (r.x + 70) - data->scroll*8;
-//                pos_x = (r.x + 5) - data->scroll*8;
                 pos_y += LINE_DISTANCE;
             }
             
-            s++;
-        }
+            str++;
+
+        }// while (*str)
+
         // Get "ed->line_count": continue incremeting "count_ch" at END(str)
-        while (*s) {
-            if (*s == '\n') data->line_count++;
-            s++;
+        while (*str) {
+            if (*str == '\n') data->line_count++;
+            str++;
         }
 
         // draw cursor position
@@ -168,10 +283,10 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
         // display: LINE NUMBER, COL, ...
         //
-        SDL_FillRect (screen, &(SR){ r.x+62, r.y+r.h-LINE_DISTANCE, r.w-62, LINE_DISTANCE}, 0); // BG: LINE: COL:
-        DrawHline (screen, r.x+60, r.y+r.h-LINE_DISTANCE, r.x+r.w, COLOR_WHITE);
+        SDL_FillRect (screen, &(SR){ r.x+1, r.y+r.h-LINE_DISTANCE, r.w-2, LINE_DISTANCE}, 0); // BG: LINE: COL:
+        DrawHline (screen, r.x+1, r.y+r.h-LINE_DISTANCE, r.x+r.w, COLOR_WHITE);
         sprintf (buf, "LINE: %d/%d  COL: %d - LEN/SIZE( %d / %d ) | %d = '%c' ", data->line+1, data->line_count, data->col+1, data->len, data->size, data->text[data->pos], data->text[data->pos]);
-        DrawText (screen, buf, r.x+70, r.y+r.h-15, COLOR_WHITE);
+        DrawText (screen, buf, r.x+5, r.y+r.h-15, COLOR_WHITE);
 
         } break; // case MSG_DRAW:
 
@@ -179,7 +294,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
         return 1; // object focused ok
 
     case MSG_KEY: {
-        char *str = data->text;
+//        str = data->text;
         int count;
 
         if (key_ctrl) {
@@ -222,7 +337,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
                 data->scroll--;
         }
         else if (value == SDLK_RIGHT && data->pos < data->len-1) { // -->
-            if (s[data->pos] == '\n') { // if "current char" = new line
+            if (str[data->pos] == '\n') { // if "current char" = new line
 
                 // if last line(DISPLAYED)
                 if ( (data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14 )
@@ -389,8 +504,8 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     data->line_pos = 0;
     data->line_count = 0;
     data->size = size; // memory size text alloc
-    data->color = COLOR_ORANGE;
-    data->bg = 0;
+//    data->color = COLOR_ORANGE;
+    data->bg = 8;
 
     o = app_ObjectNew (proc_editor, x, y, 320, 245, id, OBJECT_TYPE_EDITOR, data);
 

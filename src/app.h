@@ -34,7 +34,7 @@ extern "C" {
 #define LIBIMPORT       extern
 #define BMP             SDL_Surface
 //
-#define COLOR_ORANGE    64515
+#define COLOR_ORANGE    64512
 #define CONSOLE_BG      8 // blue
 #define SR              struct SDL_Rect
 #define MRGB(r,g,b)     SDL_MapRGB(screen->format, r, g, b)
