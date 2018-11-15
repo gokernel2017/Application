@@ -37,12 +37,14 @@ extern "C" {
 #define COLOR_ORANGE    64512
 #define CONSOLE_BG      8 // blue
 #define SR              struct SDL_Rect
+#define CTRL_KEY_S      19 // CTRL + S
 #define MRGB(r,g,b)     SDL_MapRGB(screen->format, r, g, b)
 #define COLOR_BORDER    11184810
 #define COLOR_PURPURE   12402852
 #define COLOR_WHITE     16777215
 #define COLOR_BLUE2     33237
 #define COLOR_OBG       15724527  // object bg
+
 //
 // object send message
 #define MSG_DRAW        1
@@ -127,8 +129,9 @@ LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *t
 
 // Editor Functions:
 //
-LIBIMPORT void app_EditorSetFileName (OBJECT *o, char *FileName);
-
+LIBIMPORT void    app_EditorSetFileName (OBJECT *o, char *FileName);
+LIBIMPORT char  * app_EditorGetFileName (OBJECT *o);
+LIBIMPORT char  * app_EditorGetText (OBJECT *o);
 
 //
 // draw.c | Drawing Primitive:

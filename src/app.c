@@ -263,7 +263,6 @@ void app_UpdateGui (OBJECT *o) {
                     arg.msg = MSG_KEY;
                     arg.key = key;
                     object_focus->call (&arg);
-printf ("editor call\n");
                 }
             }
         }

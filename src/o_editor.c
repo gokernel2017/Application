@@ -34,10 +34,7 @@
 #define C_COMMENT_LINE          63518
 #define C_STRING                65504
 #define C_PRE_PROC              2016
-
 #define C_WORD                  2047
-
-#define CTRL_KEY_S              19
 
 typedef struct {
     char  *text; // use malloc (size)
@@ -294,26 +291,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
         return 1; // object focused ok
 
     case MSG_KEY: {
-//        str = data->text;
         int count;
-
-        if (key_ctrl) {
-
-            if (value == CTRL_KEY_S && data->FileName[0]) { // CTRL + S
-                FILE *fp;
-                char *s = data->text;
-                if ((fp = fopen (data->FileName, "w")) != NULL) {
-                    while (*s) {
-                        fputc (*s, fp);
-                        s++;
-                    }
-                    fclose (fp);
-                    printf ("\nSaved: '%s'\n", data->FileName);
-                }
-            }
-
-      return 0;
-        }
 
         if (value == SDLK_UP && data->line > 0) {
             if (data->line_pos > 0)
@@ -512,5 +490,18 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     app_ObjectAdd (parent, o);
 
     return o;
+}
+
+char * app_EditorGetText (OBJECT *o) {
+    DATA_EDITOR *data = app_GetData (o);
+    if (data)
+        return data->text;
+    return NULL;
+}
+char * app_EditorGetFileName (OBJECT *o) {
+    DATA_EDITOR *data = app_GetData (o);
+    if (data)
+        return data->FileName;
+    return NULL;
 }
 

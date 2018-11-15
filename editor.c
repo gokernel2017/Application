@@ -22,6 +22,27 @@ OBJECT *ed;
 char *text = NULL;
 char *FileName = NULL;
 
+void call_editor (ARG *a) {
+    //
+    // CTRL + S: Save the text
+    //
+    if (key_ctrl && a->key == CTRL_KEY_S) {
+        char *FileName = app_EditorGetFileName (ed);
+        if (FileName[0]) { // CTRL + S
+            FILE *fp;
+            char *s = app_EditorGetText (ed);
+            if ((fp = fopen (FileName, "w")) != NULL) {
+                while (*s) {
+                    fputc (*s, fp);
+                    s++;
+                }
+                fclose (fp);
+                printf ("\nSaved: '%s'\n", FileName);
+            }
+        }
+    }
+}
+
 void CreateInterface (void) {
 
     if (text && FileName) {
@@ -33,6 +54,7 @@ void CreateInterface (void) {
 
     app_SetSize (ed, screen->w-100, screen->h);
     app_SetFocus (ed);
+    app_SetCall (ed, call_editor);
 }
 
 int main (int argc, char **argv) {
