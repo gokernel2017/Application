@@ -37,13 +37,17 @@ extern "C" {
 #define COLOR_ORANGE    64512
 #define CONSOLE_BG      8 // blue
 #define SR              struct SDL_Rect
-#define CTRL_KEY_S      19 // CTRL + S
 #define MRGB(r,g,b)     SDL_MapRGB(screen->format, r, g, b)
 #define COLOR_BORDER    11184810
 #define COLOR_PURPURE   12402852
 #define COLOR_WHITE     16777215
 #define COLOR_BLUE2     33237
 #define COLOR_OBG       15724527  // object bg
+
+// CTRL + KEY:
+#define CTRL_KEY_C      3   // CTRL + C
+#define CTRL_KEY_S      19  // CTRL + S
+#define CTRL_KEY_V      22  // CTRL + V
 
 //
 // object send message
@@ -94,6 +98,7 @@ struct TRect {
 //
 LIBIMPORT SDL_Surface *screen;
 LIBIMPORT int key_ctrl;
+LIBIMPORT int key_shift;
 
 //-----------------------------------------------
 //-----------------  PUBLIC API  ----------------
@@ -105,6 +110,7 @@ LIBIMPORT int       app_Init          (int argc, char **argv);
 LIBIMPORT void      app_Run           (void (*call) (void));
 LIBIMPORT void    * app_GetData       (OBJECT *o);
 LIBIMPORT void      app_GetRect       (OBJECT *o, SDL_Rect *rect);
+LIBIMPORT int       app_GetType       (OBJECT *o);
 LIBIMPORT OBJECT  * app_GetByID       (int id);
 LIBIMPORT char    * app_FileOpen      (const char *FileName);
 LIBIMPORT void      app_SetFocus      (OBJECT *o);
@@ -113,7 +119,7 @@ LIBIMPORT int       app_Focused       (OBJECT *o);
 LIBIMPORT void      app_SetCall       (OBJECT *o, void (*call) (ARG *arg));
 LIBIMPORT void      app_ObjectAdd     (OBJECT *o, OBJECT *sub);
 LIBIMPORT void      app_ObjectUpdate  (OBJECT *o); // draw and display
-LIBIMPORT int       app_ShowDialog    (char *text);
+LIBIMPORT int       app_ShowDialog    (char *text, int ok);
 //
 LIBIMPORT OBJECT * app_ObjectNew (
     int   (*proc) (OBJECT *o, int msg, int value),
@@ -130,8 +136,12 @@ LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *t
 // Editor Functions:
 //
 LIBIMPORT void    app_EditorSetFileName (OBJECT *o, char *FileName);
+LIBIMPORT int     app_EditorFindString (OBJECT *o, char *str, int start);
 LIBIMPORT char  * app_EditorGetFileName (OBJECT *o);
 LIBIMPORT char  * app_EditorGetText (OBJECT *o);
+
+// Edit Functions:
+LIBIMPORT char  * app_EditGetText (OBJECT *o);
 
 //
 // draw.c | Drawing Primitive:

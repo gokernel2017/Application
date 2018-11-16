@@ -10,6 +10,9 @@
 #define LINE_DISTANCE           17
 //#define LINE_DISTANCE           15
 
+//#define SELECTED_TEXT_SIZE  1024 * 4
+#define SELECTED_COLOR      33808
+
 // To state of sintax color
 // CODE FROM: SciTE100 Editor 1.0
 #define STATE_DEFAULT       0
@@ -50,10 +53,13 @@ typedef struct {
     int   line_ini;
     int   line_len;
     //
-    int   len;      // string len
-    int   size;     // memory size text alloc
+    int   sel_start;  // text selected ... WHITH SHIFT KEY
+    int   sel_len;
+    //
+    int   len;        // string len
+    int   size;       // memory size text alloc
     int   saved;
-    int   bg;       // bg color
+    int   bg;         // bg color
 }DATA_EDITOR;
 
 
@@ -62,7 +68,11 @@ static char         *str;
 static SDL_Rect     r;
 static int          state, color;
 static int          is_reserved_word;
+static char         is_selected; // selected text(SHIFT PRESSED)
+static char         *selected_text = NULL;
 int C_RED = 12345;
+
+int count;
 
 inline char iswordchar (char ch) {
     return isalnum(ch) || ch == '.' || ch == '_';
@@ -106,6 +116,49 @@ void InsertChar (char *string, register int index, int ch) {
     }
     string[index] = ch;
 }
+
+//-------------------------------------------------------------------
+// Find a string in object EDITOR.
+//-------------------------------------------------------------------
+int app_EditorFindString (OBJECT *o, char *str, int start) {
+
+    if (str && app_GetType(o) == OBJECT_TYPE_EDITOR) {
+        DATA_EDITOR *data = app_GetData (o);
+        int c, char1=0, index=0, pos=-1;
+        char *find, *text = data->text;
+        char *string = data->text;
+
+        text += start;
+        find = strstr(text, str);
+
+        if (find) {
+
+            pos = strlen(string)-strlen(find);
+
+            for (c = 0; string[c]; c++) {
+                if (string[c] == '\n') {
+                    char1 = c + 1;  // Primeira LETRA A SER IMPRESSA
+                    index++;    // LINHA
+                }
+                if (pos==c) break;
+            }
+
+            data->pos   = pos;      // Posicao real PARA INSERIR A LETRA
+            //ed->char1 = char1;  // Primeira LETRA A SER IMPRESSA
+            data->col = pos - char1;
+            data->line = data->line_top = index;
+            data->line_pos = 0;
+
+//        ed->sel_start = pos;
+//        ed->sel_len   = strlen(str)-1;
+          return pos;
+      }
+  }
+
+  return -1;
+
+} // app_EditorFindString ()
+
 
 void app_EditorSetFileName (OBJECT *o, char *FileName) {
     DATA_EDITOR *data = app_GetData (o);
@@ -211,6 +264,14 @@ int proc_editor (OBJECT *o, int msg, int value) {
             // Draw char in area of editor
             if (pos_x < r.x+r.w-8) {
 
+                // Selected TEXT - with SHIFT KEY:
+                if (is_selected) {
+                    int i = (int)(str-data->text);
+                    if (i >= data->sel_start && i < data->sel_start+data->sel_len) {
+                        SDL_FillRect (screen, &(SR){ pos_x, pos_y, 8, 15 }, SELECTED_COLOR);
+                    }
+                } 
+
                 if (state == STATE_DEFAULT) { // ! is state not STATE_COMMENT
 
                   // CODE FROM: SciTE100 Editor 1.0
@@ -274,9 +335,11 @@ int proc_editor (OBJECT *o, int msg, int value) {
             str++;
         }
 
-        // draw cursor position
-        DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * LINE_DISTANCE, 9, 14, COLOR_WHITE);
-        DrawVline (screen, (r.x+69+data->col*8) -data->scroll*8, r.y+1, r.y+r.h-2, COLOR_WHITE);
+//        if (app_Focused(o)) {
+            // draw cursor position
+            DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * LINE_DISTANCE, 9, 14, COLOR_WHITE);
+            DrawVline (screen, (r.x+69+data->col*8) -data->scroll*8, r.y+1, r.y+r.h-2, COLOR_WHITE);
+//        }
 
         // display: LINE NUMBER, COL, ...
         //
@@ -442,6 +505,41 @@ int proc_editor (OBJECT *o, int msg, int value) {
         // if "data->col" NAO ULTRAPASSA O "tamanho->w"
         if (data->col*8 < r.w-88)
             data->scroll = 0;
+
+        if (key_ctrl) {
+            if (value == CTRL_KEY_C && is_selected) {
+                int i = data->sel_start;
+                int count = 0;
+
+                if (selected_text)
+                    free (selected_text);
+
+                if ((selected_text = malloc(data->sel_len+2)) != NULL) {
+                    for (i = data->sel_start; i < data->sel_start+data->sel_len; i++) {
+                        selected_text[count++] = data->text[i];
+                    }
+                    selected_text[count] = 0;
+                }
+            }
+            else
+            if (value == CTRL_KEY_V && selected_text) {
+                char *s = selected_text;
+                while (*s) {
+                    if (data->len < data->size-1) {
+                        InsertChar (data->text, data->pos, *s);
+                        data->len++;
+                        data->pos++;
+                        data->col++;
+                    }
+                    s++;
+                }
+            }
+        }
+        else if (key_shift) {
+            if (!is_selected) { data->sel_start = data->pos; }
+            data->sel_len = abs(data->pos - data->sel_start);
+            is_selected = 1;
+        } else { is_selected = 0; data->sel_len = 0; }
 
         return RET_CALL;
         } break; // case MSG_KEY:

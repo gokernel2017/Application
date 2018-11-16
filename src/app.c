@@ -18,8 +18,9 @@
 #include "app.h"
 
 #define DIALOG_TEXT_SIZE  100
-#define ID_YES            1
 #define ID_NO             0
+#define ID_YES            1
+#define ID_OK             2
 
 // size: 64
 // size: 52
@@ -55,6 +56,7 @@ static void app_UpdatePos (OBJECT *obj);
 //
 SDL_Surface *screen;
 int key_ctrl;
+int key_shift;
 
 DATA_DIALOG dialog_data;
 
@@ -64,6 +66,7 @@ static OBJECT * dialog_root = NULL;
 static OBJECT * dialog      = NULL;
 static OBJECT * dlgYES      = NULL;
 static OBJECT * dlgNO       = NULL;
+static OBJECT * dlgOK       = NULL;
 //-----------------------------------------------
 static OBJECT * root         = NULL; // the root object
 static OBJECT * current      = NULL; // the current object
@@ -86,7 +89,6 @@ static int
     state,
     quit,
     dialog_quit, dialog_ret,
-    count,
     key,
     mx, my // mouse_x, mouse_y
     ;
@@ -249,9 +251,11 @@ void app_UpdateGui (OBJECT *o) {
 
         if (key == SDLK_RCTRL || key == SDLK_LCTRL)
             key_ctrl = 1;
+        if (key == SDLK_RSHIFT || key == SDLK_LSHIFT)
+            key_shift = 1;
 
         if (key == SDLK_F12 && o == root) {
-            quit = app_ShowDialog("Application API - Exit ?");
+            quit = app_ShowDialog("Application API - Exit ?", 0);
         }
 
         if (object_focus && object_focus->visible && object_focus->focus) {
@@ -276,6 +280,8 @@ void app_UpdateGui (OBJECT *o) {
 
         if (k == SDLK_RCTRL || k == SDLK_LCTRL)
             key_ctrl = 0;
+        if (k == SDLK_RSHIFT || k == SDLK_LSHIFT)
+            key_shift = 0;
 
         } break; // case SDL_KEYUP:
 
@@ -358,8 +364,12 @@ void * app_GetData (OBJECT *o) {
 }
 
 void app_GetRect (OBJECT *o, SDL_Rect *rect) {
-    *rect = o->rect;    
+    *rect = o->rect;
 }
+int app_GetType (OBJECT *o) {
+    return o->type;    
+}
+
 
 int app_Focused (OBJECT *o) {
     return o->focus;
@@ -402,7 +412,7 @@ static void app_ObjectMouseFind (OBJECT *obj) {
     while (sub) {
         if (sub->visible && mx > sub->rect.x && mx < sub->rect.x+sub->rect.w && my > sub->rect.y && my < sub->rect.y+sub->rect.h) {
             mouse_find = sub;
-            if (sub->first && sub->first->visible) {
+            if (sub->first) {
                 app_ObjectMouseFind (sub);
             }
         }
@@ -414,7 +424,7 @@ static void app_ObjectDrawAll (OBJECT *obj) {
     while (sub) {
         if (sub->visible) {
             sub->proc (sub, MSG_DRAW, 0);
-            if (sub->first && sub->first->visible) {
+            if (sub->first) {
                 app_ObjectDrawAll (sub);
             }
         }
@@ -476,8 +486,6 @@ void app_SetCall (OBJECT *o, void (*call) (ARG *arg)) {
         o->call = call;
 }
 
-
-
 int proc_dialog (OBJECT *o, int msg, int value) {
     if (msg == MSG_DRAW) {
         SDL_Rect r;
@@ -517,7 +525,7 @@ void call_dialog (ARG *arg) {
     dialog_ret = arg->id;
 }
 
-int app_ShowDialog (char *text) {
+int app_ShowDialog (char *text, int ok) {
 
     if (dialog_root == NULL) {
         if ((dialog_root = app_ObjectNew (proc_null,0,0,0,0,0,0,NULL)) != NULL) {
@@ -528,8 +536,10 @@ printf ("Criando DIALOG\n");
             app_ObjectAdd (dialog_root, dialog);
             dlgYES = app_NewButton (dialog, ID_YES, 142, 55, "YES");
             dlgNO  = app_NewButton (dialog, ID_NO,  258, 55, "NO");
+            dlgOK  = app_NewButton (dialog, ID_OK,  200, 55, "OK");
             app_SetCall (dlgYES, call_dialog);
             app_SetCall (dlgNO, call_dialog);
+            app_SetCall (dlgOK, call_dialog);
         }
     }
 
@@ -541,6 +551,16 @@ printf ("Criando DIALOG\n");
         dialog_ret = 0;
         dialog_quit = 0;
         dialog->visible = 1;
+
+        if (ok) { // Show with OK BUTTON
+            dlgOK->visible = 1;
+            dlgYES->visible = 0;
+            dlgNO->visible = 0;
+        } else {
+            dlgOK->visible = 0;
+            dlgYES->visible = 1;
+            dlgNO->visible = 1;
+        }
 
         if (text && strlen(text) < DIALOG_TEXT_SIZE-1) {
             sprintf (dialog_data.text, "%s", text);

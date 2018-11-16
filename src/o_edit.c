@@ -145,8 +145,9 @@ int proc_edit (OBJECT *o, int msg, int value) {
                     s[p] = s[p+1];
             }
         }
-        else if (value==SDLK_RETURN) {
+        else if (value == SDLK_RETURN || value == SDLK_TAB) {
             // bla bla bla ...
+            return RET_CALL;
         }
         else {
             value &= 0xff;
@@ -208,5 +209,14 @@ OBJECT *app_NewEdit (OBJECT *parent, int id, int x, int y, char *text, int size)
     app_ObjectAdd (parent, o);
 
     return o;
+}
+
+char * app_EditGetText (OBJECT *o) {
+    if (app_GetType(o) == OBJECT_TYPE_EDIT) {
+        DATA_EDIT *data = app_GetData(o);
+        if (data && data->text)
+            return data->text;
+    }
+    return NULL;
 }
 
