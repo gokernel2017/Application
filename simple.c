@@ -20,6 +20,7 @@
 
 #define ID_SIMPLE   10000
 
+
 typedef struct {
     char  *text;
     int   fg;
@@ -40,7 +41,7 @@ int proc_simple (OBJECT *o, int msg, int value) {
         app_GetRect (o, &r);
 
         DrawRect (screen, r.x, r.y, r.w-1, r.h-1, data->fg); // border
-        SDL_FillRect (screen, &(SR){ r.x+1, r.y+1, r.w-2, r.h-2}, data->bg); // bg
+        SDL_FillRect (screen, &(SR){ r.x+1, r.y+1, r.w-2, r.h-2}, data->bg); // bg Hello_World_testando
 
         // on mouse top
         if (value)
@@ -51,15 +52,12 @@ int proc_simple (OBJECT *o, int msg, int value) {
 
         } break;
 
-
     case MSG_MOUSE_DOWN:
     case MSG_MOUSE_UP:
         return RET_CALL; // enable to callback
 
-
     case MSG_FOCUS:
         return 0; // object no focused
-
 
     case MSG_ENTER:
     case MSG_LEAVE:

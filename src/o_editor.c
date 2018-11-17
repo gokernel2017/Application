@@ -592,14 +592,120 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
 
 char * app_EditorGetText (OBJECT *o) {
     DATA_EDITOR *data = app_GetData (o);
-    if (data)
+    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data)
         return data->text;
     return NULL;
 }
 char * app_EditorGetFileName (OBJECT *o) {
     DATA_EDITOR *data = app_GetData (o);
-    if (data)
+    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data)
         return data->FileName;
     return NULL;
+}
+
+
+void app_EditorListFunction (OBJECT *o, MENU *menu) {
+    DATA_EDITOR *data = app_GetData (o);
+    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data) {
+        char *text = data->text;
+        register int ch = 0;
+        unsigned char comment = 0, comment_line = 0, string = 0;
+//        int ret;
+
+        if (!menu)
+      return;
+
+        app_MenuItenClear (menu);
+
+        while (text[ch]) {
+
+            if(text[ch]=='/' && text[ch+1]=='*') comment = 1;
+            else
+            if(text[ch-1]=='*' && text[ch]=='/') comment = 0;
+
+            if(!comment){
+                if(text[ch]=='\n') comment_line = 0;
+                else
+                if(text[ch]=='/' && text[ch+1]=='/') comment_line = 1;
+            }
+
+            if (!comment && !comment_line)
+            if (text[ch]=='{' && (
+               text[ch-1]==')'  ||  // "){"
+               text[ch-2]==')'  ||  // ") {" or ")\n{"
+               text[ch-3]==')'  )   // ") \n{"
+            ) {
+                int v;
+                int pos = ch;
+
+                //---------------------------------------------------
+                // Decrement 'pos' to start of line of function name.
+                //---------------------------------------------------
+                v = 0;
+                while (text[pos]) {
+
+                    //---------------------------------------------------
+                    // BECAUSE THIS: void any_func ( int (*proc)(int), int any) {
+                    //---------------------------------------------------
+                    if(text[pos]=='(') v++;
+                    if(text[pos]==')') v--;
+
+                    if(pos<ch-3)
+                    if(v==0 && text[pos]=='\n'){ // The start of line
+                      char buf[1024];
+                      int cc = 0;
+
+                        // Copy the function name to buf
+                        for(v=pos+1; v != ch+1; v++) {
+                            if(cc<1020) buf[cc++] = text[v];
+                        }
+                        buf[cc] = 0;
+//                        printf ("FUNCTION(%s)\n", buf);
+                        app_MenuItenAdd (menu, buf);
+
+                    break;
+                    }
+                    pos--;
+                }
+
+                //---------------------------------------------------
+                // Increment to end of function!
+                //---------------------------------------------------
+                v = 0;
+                while (text[ch]) {
+                    // For now only line comment.
+                    if(text[ch]=='\n') comment_line = 0;
+                    else
+                    if(text[ch]=='/' && text[ch+1]=='/') comment_line = 1;
+
+                    if(!string && (text[ch]==34/*"*/ || text[ch]==39/*'*/))
+                        string = 1;
+                    else if(string && (text[ch]==34/*"*/ || text[ch]==39/*'*/))
+                        string = 0;
+
+                    if(!comment_line && !string){
+                        if(text[ch]=='{') v++;
+                        if(text[ch]=='}') v--;
+                    if(v==0) break;
+                    }
+                    ch++;
+                }
+            }
+            ch++;
+        }// while(text[ch])
+    }
+}//END: AS_medit_menu_function()
+
+
+void app_EditorFree (OBJECT *o) {
+    DATA_EDITOR *data = app_GetData (o);
+    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data) {
+        if (data->text)
+            free (data->text);
+        free (data);
+        free (o);
+        o = NULL;
+        data = NULL;
+    }
 }
 

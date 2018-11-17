@@ -64,20 +64,25 @@ extern "C" {
 #define RET_REDRAW      11  // redraw the current object
 #define RET_CALL        12
 
+#define DIALOG_OK       1
+
 enum {
     OBJECT_TYPE_OBJECT = 1,
     OBJECT_TYPE_BUTTON,
     OBJECT_TYPE_EDIT,
-    OBJECT_TYPE_EDITOR
+    OBJECT_TYPE_EDITOR,
+    OBJECT_TYPE_MENU
 };
 
 //-----------------------------------------------
 //-------------------  STRUCT  ------------------
 //-----------------------------------------------
 //
-typedef struct OBJECT   OBJECT; // opaque struct in file: "sgui.c"
-typedef struct ARG      ARG;    // OBJECT Function Callback Argument
-typedef struct TRect    TRect;
+typedef struct OBJECT     OBJECT; // opaque struct in file: "sgui.c"
+typedef struct ARG        ARG;    // OBJECT Function Callback Argument
+typedef struct TRect      TRect;
+typedef struct MENU       MENU;
+typedef struct MENU_ITEN  MENU_ITEN;
 
 struct ARG { // OBJECT Function Callback Argument
     int   msg;
@@ -86,10 +91,22 @@ struct ARG { // OBJECT Function Callback Argument
     int   y;
     int   key;
 };
-
 struct TRect {
     short   x,  y;
     short   w,  h;
+};
+struct MENU {
+    int   w;
+    int   h;
+    int   index;
+    int   top;
+    int   count;
+    int   button_h; // button h
+    MENU_ITEN *iten_first;
+};
+struct MENU_ITEN {
+    char  *text;
+    MENU_ITEN *next;
 };
 
 //-----------------------------------------------
@@ -115,6 +132,7 @@ LIBIMPORT OBJECT  * app_GetByID       (int id);
 LIBIMPORT char    * app_FileOpen      (const char *FileName);
 LIBIMPORT void      app_SetFocus      (OBJECT *o);
 LIBIMPORT void      app_SetSize       (OBJECT *o, int w, int h);
+LIBIMPORT void      app_SetVisible    (OBJECT *o, int visible);
 LIBIMPORT int       app_Focused       (OBJECT *o);
 LIBIMPORT void      app_SetCall       (OBJECT *o, void (*call) (ARG *arg));
 LIBIMPORT void      app_ObjectAdd     (OBJECT *o, OBJECT *sub);
@@ -132,6 +150,7 @@ LIBIMPORT OBJECT * app_ObjectNew (
 LIBIMPORT OBJECT * app_NewButton  (OBJECT *parent, int id, int x, int y, char *text);
 LIBIMPORT OBJECT * app_NewEdit    (OBJECT *parent, int id, int x, int y, char *text, int size);
 LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *text, int size);
+LIBIMPORT OBJECT * app_NewMenu    (OBJECT *parent, int id, int x, int y);
 
 // Editor Functions:
 //
@@ -139,9 +158,20 @@ LIBIMPORT void    app_EditorSetFileName (OBJECT *o, char *FileName);
 LIBIMPORT int     app_EditorFindString (OBJECT *o, char *str, int start);
 LIBIMPORT char  * app_EditorGetFileName (OBJECT *o);
 LIBIMPORT char  * app_EditorGetText (OBJECT *o);
+LIBIMPORT void    app_EditorListFunction (OBJECT *o, MENU *menu);
+LIBIMPORT void    app_EditorFree (OBJECT *o);
 
 // Edit Functions:
 LIBIMPORT char  * app_EditGetText (OBJECT *o);
+
+//
+// menu.c
+//
+LIBIMPORT MENU  * app_MenuCreate (int w, int h);
+LIBIMPORT void    app_MenuItenAdd (MENU *m, char *text);
+LIBIMPORT void    app_MenuItenClear (MENU *m);
+LIBIMPORT int     app_Menu (MENU *m, int x, int y);
+LIBIMPORT MENU_ITEN * app_MenuItenGet (MENU *m, int index);
 
 //
 // draw.c | Drawing Primitive:

@@ -19,7 +19,7 @@ OBJECT *bt1, *bt2;
 
 void call_button (ARG *a) {
 //    static int count = 0;
-    printf ("ShowDialog = %d\n", app_ShowDialog("Select YES/NO"));
+    printf ("ShowDialog = %d\n", app_ShowDialog("Select YES/NO", 0));
 //    printf ("Call button ID( %d ): %d\n", a->id, count++);
 }
 

@@ -228,6 +228,8 @@ void app_UpdateGui (OBJECT *o) {
                 current->call (&arg);
             }
 
+//printf ("ID: %d\n", current->id);
+
         }// if (current)
 
         break;// case SDL_MOUSEBUTTONDOWN:
@@ -484,6 +486,10 @@ void app_SetFocus (OBJECT *o) {
 void app_SetCall (OBJECT *o, void (*call) (ARG *arg)) {
     if (o)
         o->call = call;
+}
+
+void app_SetVisible (OBJECT *o, int visible) {
+    o->visible = visible;
 }
 
 int proc_dialog (OBJECT *o, int msg, int value) {
