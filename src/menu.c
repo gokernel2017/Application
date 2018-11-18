@@ -15,6 +15,7 @@ MENU * app_MenuCreate (int w, int h) {
     m->h = h;
     m->index = 0;
     m->top = 0;
+    m->pos_y = 0;
     m->count = 0;
     m->button_h = 25;
     m->iten_first = NULL;
@@ -23,7 +24,7 @@ MENU * app_MenuCreate (int w, int h) {
         if (y >= h) break;
         y += m->button_h;
     }
-    m->h = (i * m->button_h)+5;
+    m->h = (i * m->button_h)+4;
     return m;
 }
 
@@ -62,6 +63,7 @@ void app_MenuItenClear (MENU *m) {
         }
         m->index = 0;
         m->top = 0;
+        m->pos_y = 0;
         m->count = 0;
         m->iten_first = NULL;
     }
@@ -79,21 +81,54 @@ MENU_ITEN * app_MenuItenGet (MENU *m, int index) {
 
 }// app_MenuItenGet()
 
+/*
+
+          if ( ASkey == AS_KEY_UP && M->index > 0) {
+              M->index--; draw = 1;
+
+              if (pos_y > 0) // If iten selected in top!
+                  pos_y -= M->button_h;
+              else
+                  M->top--;
+          }
+
+          if ( ASkey == AS_KEY_DOWN && M->index < M->count-1) {
+              M->index++; draw = 1;
+
+              if (pos_y < M->h - M->button_h - 10) // If iten selected in botton!
+                  pos_y += M->button_h;
+              else
+                  M->top++;
+          }
+*/
 
 static void MenuDraw (MENU *m, int x, int y) {
     MENU_ITEN *iten;
     int pos_y = y, top = 0;
     SDL_FillRect (screen, &(SR){ x+1, y+1, m->w-2, m->h-2 }, MRGB(255,251,198)); // bg
     DrawRectR (screen, x, y, m->w, m->h, COLOR_ORANGE);
+
+    // bg index
+//    SDL_FillRect (screen, &(SR){ x+2, y+2+m->pos_y, m->w-4, m->button_h }, MRGB(255,227,82)); // bg first iten
+    SDL_FillRect (screen, &(SR){ x+2, y + 2 + m->pos_y, m->w-4, m->button_h }, COLOR_WHITE); // bg first iten
+    DrawRectR (screen, x+2, y + 2 + m->pos_y, m->w-4, m->button_h, COLOR_ORANGE); // border first iten
+
     iten = m->iten_first;
     while (iten) {
         if (pos_y > (y+m->h)-m->button_h) break;
         if (top >= m->top) {
-            if (top == m->index) {
-                SDL_FillRect (screen, &(SR){ x+2, pos_y+2, m->w-4, m->button_h }, MRGB(255,227,82)); // first iten
-                DrawRect (screen, x+2, pos_y+2, m->w-5, m->button_h, COLOR_ORANGE); // border first iten
+            //-------------------------------------------------------
+            //DrawText (screen, iten->text, x+10, pos_y+8, COLOR_ORANGE);
+            //-------------------------------------------------------
+            char *s = iten->text;
+            int xx = x+10;
+            while (*s) {
+                if (xx > (x+m->w)-20) break;
+                DrawChar (screen, *s, xx, pos_y+8, COLOR_ORANGE);
+                xx += 8;
+                s++;
             }
-            DrawText (screen, iten->text, x+10, pos_y+8, COLOR_ORANGE);
+            //-------------------------------------------------------
             pos_y += m->button_h;
         }
         top++;
@@ -122,9 +157,17 @@ int app_Menu (MENU *m, int x, int y) {
                 }
                 else if (k == SDLK_UP && m->index > 0) {
                     m->index--;
+                    if (m->pos_y > 0) // If iten selected in top!
+                        m->pos_y -= m->button_h;
+                    else
+                        m->top--;
                 }
                 else if (k == SDLK_DOWN && m->index < m->count-1) {
                     m->index++;
+                    if (m->pos_y < m->h - m->button_h - 10) // If iten selected in botton!
+                        m->pos_y += m->button_h;
+                    else
+                        m->top++;
                 }
 
                 MenuDraw (m,x,y);

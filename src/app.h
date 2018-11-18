@@ -100,6 +100,7 @@ struct MENU {
     int   h;
     int   index;
     int   top;
+    int   pos_y;
     int   count;
     int   button_h; // button h
     MENU_ITEN *iten_first;

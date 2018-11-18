@@ -256,7 +256,8 @@ void app_UpdateGui (OBJECT *o) {
         if (key == SDLK_RSHIFT || key == SDLK_LSHIFT)
             key_shift = 1;
 
-        if (key == SDLK_F12 && o == root) {
+//        if (key == SDLK_F12 && o == root) {
+        if (key == SDLK_ESCAPE && o == root) {
             quit = app_ShowDialog("Application API - Exit ?", 0);
         }
 
