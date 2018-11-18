@@ -58,8 +58,6 @@ void call_button1 (ARG *a) {
     }
 }
 void call_button2 (ARG *a) {
-    app_ShowDialog (EDITOR_TEMPLATE_DIR, DIALOG_OK);
-/*
     char buf[255];
     int ret;
 
@@ -67,9 +65,9 @@ void call_button2 (ARG *a) {
     app_MenuItenClear (menu);
 
 #ifdef __WIN32__
-  {
-  int done;
-  struct _finddata_t find;
+    {
+    int done;
+    struct _finddata_t find;
  
     sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, "*.*");
 
@@ -77,21 +75,23 @@ void call_button2 (ARG *a) {
     done = _findfirst (buf, &find);
     do {
         if (!(find.attrib & _A_SUBDIR)) {
-            sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, find.name);
-            app_MenuItenAdd (menu, buf);
+            if (strstr(find.name, ".tem")) {
+                sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, find.name);
+                app_MenuItenAdd (menu, buf);
+            }
         }
     } while ( !_findnext(done, &find) );
     _findclose(done);
     
-  }
+    }
 #endif // __WIN32__
 
 
 #ifdef __linux__
-  {
-  DIR *dir;
-  struct dirent *entry;
-  struct stat s;
+    {
+    DIR *dir;
+    struct dirent *entry;
+    struct stat s;
 
     sprintf (buf, "%s", EDITOR_TEMPLATE_DIR);
 
@@ -104,15 +104,15 @@ void call_button2 (ARG *a) {
         if (!entry) break;
 
         if ( !(stat(entry->d_name, &s) == 0 && S_ISDIR(s.st_mode)) ) {
-//            printf ("FILE: %s\n", entry->d_name);
-            sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, entry->d_name);
-            app_MenuItenAdd (menu, buf);
-
+            if (strstr(entry->d_name, ".tem")) {
+                sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, entry->d_name);
+                app_MenuItenAdd (menu, buf);
+            }
         }
     }// for (;;)
     closedir(dir);
 
-  }
+    }
 #endif // __linux__
 
     if ((ret = app_Menu (menu, 106, 33)) != -1) {
@@ -120,17 +120,23 @@ void call_button2 (ARG *a) {
         FILE *fp;
         int c;
         if ((iten = app_MenuItenGet (menu, ret)) != NULL) {
+            DATA_EDITOR *data = app_GetData (editor);
             if ((fp = fopen (iten->text, "r")) != NULL) {
                 while ((c = fgetc(fp)) != EOF) {
-printf ("%c", c);
+                    if (data->len < data->size-2) {
+                        app_EditorInsertChar (data->text, data->pos, c);
+                        data->len++;
+                        data->pos++;
+                    }
                 }
                 fclose(fp);
             }
         }
     }
 
+    app_SendMessage (editor, MSG_KEY, 0);
     app_ObjectUpdate (editor);
-*/
+
 }// call_button2 ()
 
 //
@@ -160,17 +166,25 @@ void call_editor (ARG *a) {
     // CTRL + S: Save the text
     //
     if (key_ctrl && a->key == CTRL_KEY_S) {
-        char *FileName = app_EditorGetFileName (editor);
-        if (FileName[0]) { // CTRL + S
+        DATA_EDITOR *data = app_GetData (editor);
+        if (data) {
+            if (data->FileName[0]==0) {
+                sprintf (data->FileName, "%s", app_EditGetText(edit));
+printf ("EDITOR NAME(%s)\n", data->FileName);
+            }
             FILE *fp;
-            char *s = app_EditorGetText (editor);
-            if ((fp = fopen (FileName, "w")) != NULL) {
+            char *s = data->text;
+            if ((fp = fopen (data->FileName, "w")) != NULL) {
                 while (*s) {
                     fputc (*s, fp);
                     s++;
                 }
                 fclose (fp);
-                printf ("\nSaved: '%s'\n", FileName);
+                printf ("\nOK Saved: '%s'\n", data->FileName);
+            }
+            else {
+                printf ("\nInvalid File Name: '%s'\nPlease Edit a Valid File Name !", data->FileName);
+                data->FileName[0] = 0;
             }
         }
     }
@@ -180,15 +194,18 @@ void CreateInterface (void) {
 
     button1 = app_NewButton (NULL, ID_BUTTON1, 3, 3, "FuncList");
     button2 = app_NewButton (NULL, ID_BUTTON1, 106, 3, "Template");
-    edit = app_NewEdit (NULL, ID_EDIT, 209, 3, "Find Text", 255);
+    edit = app_NewEdit (NULL, ID_EDIT, 209, 3, "Find Text | FILE NAME", EDITOR_FILE_NAME_SIZE-2);
 
     if (text && FileName) {
         editor = app_NewEditor (NULL, ID_EDITOR, 3, 33, text, 50000);
         app_EditorSetFileName (editor, FileName);
     } else {
-        editor = app_NewEditor (NULL, ID_EDITOR, 3, 33, "Editor PRIMEIRO\n", 50000);
+        editor = app_NewEditor (NULL, ID_EDITOR, 3, 33,
+        " EDITOR OBJECT 1.0\n   WINDOWS DIR TEMPLATE: c:\\editor\\template\\files.tem\n   LINUX   DIR TEMPLATE: /usr/editor/template/files.tem\n   CTRL + S: Save The Text\n",
+        50000
+        );
     }
-    app_SetSize (editor, screen->w-100, screen->h-35);
+    app_SetSize (editor, screen->w-6, screen->h-35);
     app_SetFocus (editor);
     app_SetCall (editor, call_editor);
 

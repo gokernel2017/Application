@@ -256,10 +256,13 @@ void app_UpdateGui (OBJECT *o) {
         if (key == SDLK_RSHIFT || key == SDLK_LSHIFT)
             key_shift = 1;
 
-//        if (key == SDLK_F12 && o == root) {
         if (key == SDLK_ESCAPE && o == root) {
             quit = app_ShowDialog("Application API - Exit ?", 0);
         }
+
+        // !!!!!!! To Linux !!!!!!!
+        if (ev.key.keysym.sym == SDLK_BACKSPACE)
+            key = SDLK_BACKSPACE;
 
         if (object_focus && object_focus->visible && object_focus->focus) {
             if ((ret = object_focus->proc (object_focus, MSG_KEY, key))) {
@@ -629,5 +632,9 @@ char * app_FileOpen (const char *FileName) {
     return NULL;
 }
 
-
+int app_SendMessage (OBJECT *o, int msg, int value) {
+    if (o->visible)
+        return o->proc (o,msg,value);
+    return 0;
+}
 

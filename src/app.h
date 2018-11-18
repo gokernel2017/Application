@@ -65,6 +65,8 @@ extern "C" {
 #define RET_CALL        12
 
 #define DIALOG_OK       1
+//
+#define EDITOR_FILE_NAME_SIZE   255
 
 enum {
     OBJECT_TYPE_OBJECT = 1,
@@ -78,11 +80,12 @@ enum {
 //-------------------  STRUCT  ------------------
 //-----------------------------------------------
 //
-typedef struct OBJECT     OBJECT; // opaque struct in file: "sgui.c"
-typedef struct ARG        ARG;    // OBJECT Function Callback Argument
-typedef struct TRect      TRect;
-typedef struct MENU       MENU;
-typedef struct MENU_ITEN  MENU_ITEN;
+typedef struct OBJECT       OBJECT; // opaque struct in file: "sgui.c"
+typedef struct ARG          ARG;    // OBJECT Function Callback Argument
+typedef struct DATA_EDITOR  DATA_EDITOR;
+typedef struct TRect        TRect;
+typedef struct MENU         MENU;
+typedef struct MENU_ITEN    MENU_ITEN;
 
 struct ARG { // OBJECT Function Callback Argument
     int   msg;
@@ -109,6 +112,28 @@ struct MENU_ITEN {
     char  *text;
     MENU_ITEN *next;
 };
+struct DATA_EDITOR {
+    char  *text; // use malloc (size)
+    char  FileName [EDITOR_FILE_NAME_SIZE];
+    int   pos;      // position in text: text [ pos ];
+    int   col;      // x cursor position
+    int   scroll;
+    int   line;
+    int   line_top; // first line displayed
+    int   line_pos;
+    int   line_count;
+    //
+    int   line_ini;
+    int   line_len;
+    //
+    int   sel_start;  // text selected ... WHITH SHIFT KEY
+    int   sel_len;
+    //
+    int   len;        // string len
+    int   size;       // memory size text alloc
+    int   saved;
+    int   bg;         // bg color
+};
 
 //-----------------------------------------------
 //-----------------  VARIABLES  -----------------
@@ -122,7 +147,7 @@ LIBIMPORT int key_shift;
 //-----------------  PUBLIC API  ----------------
 //-----------------------------------------------
 //
-// sgui.c | The Main Core:
+// app.c | The Main Core:
 //
 LIBIMPORT int       app_Init          (int argc, char **argv);
 LIBIMPORT void      app_Run           (void (*call) (void));
@@ -139,6 +164,7 @@ LIBIMPORT void      app_SetCall       (OBJECT *o, void (*call) (ARG *arg));
 LIBIMPORT void      app_ObjectAdd     (OBJECT *o, OBJECT *sub);
 LIBIMPORT void      app_ObjectUpdate  (OBJECT *o); // draw and display
 LIBIMPORT int       app_ShowDialog    (char *text, int ok);
+LIBIMPORT int       app_SendMessage   (OBJECT *o, int msg, int value);
 //
 LIBIMPORT OBJECT * app_ObjectNew (
     int   (*proc) (OBJECT *o, int msg, int value),
@@ -152,13 +178,12 @@ LIBIMPORT OBJECT * app_NewButton  (OBJECT *parent, int id, int x, int y, char *t
 LIBIMPORT OBJECT * app_NewEdit    (OBJECT *parent, int id, int x, int y, char *text, int size);
 LIBIMPORT OBJECT * app_NewEditor  (OBJECT *parent, int id, int x, int y, char *text, int size);
 LIBIMPORT OBJECT * app_NewMenu    (OBJECT *parent, int id, int x, int y);
+LIBIMPORT void app_EditorInsertChar (char *string, register int index, int ch);
 
 // Editor Functions:
 //
 LIBIMPORT void    app_EditorSetFileName (OBJECT *o, char *FileName);
 LIBIMPORT int     app_EditorFindString (OBJECT *o, char *str, int start);
-LIBIMPORT char  * app_EditorGetFileName (OBJECT *o);
-LIBIMPORT char  * app_EditorGetText (OBJECT *o);
 LIBIMPORT void    app_EditorListFunction (OBJECT *o, MENU *menu);
 LIBIMPORT void    app_EditorFree (OBJECT *o);
 

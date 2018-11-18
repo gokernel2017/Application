@@ -209,18 +209,19 @@ void DrawChar (BMP *bmp, char ch, int x, int y, int color) {
 }
 
 void DrawText (BMP *bmp, char *text, int x, int y, int color) {
-    short orig_x = x;
+//    short orig_x = x;
 
     while (*text) {
         if(*text > 32)
             DrawChar (bmp, *text, x, y, color);
         text++;
         x += 8;
-
+/*
         if (*text == '\n') {
             x = orig_x;
             y += 15;
         }
+*/
     }
 }
 

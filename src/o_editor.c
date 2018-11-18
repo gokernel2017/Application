@@ -6,7 +6,6 @@
 //
 #include "app.h"
 
-#define EDITOR_FILE_NAME_SIZE   255
 #define LINE_DISTANCE           17
 //#define LINE_DISTANCE           15
 
@@ -38,30 +37,6 @@
 #define C_STRING                65504
 #define C_PRE_PROC              2016
 #define C_WORD                  2047
-
-typedef struct {
-    char  *text; // use malloc (size)
-    char  FileName [EDITOR_FILE_NAME_SIZE];
-    int   pos;      // position in text: text [ pos ];
-    int   col;      // x cursor position
-    int   scroll;
-    int   line;
-    int   line_top; // first line displayed
-    int   line_pos;
-    int   line_count;
-    //
-    int   line_ini;
-    int   line_len;
-    //
-    int   sel_start;  // text selected ... WHITH SHIFT KEY
-    int   sel_len;
-    //
-    int   len;        // string len
-    int   size;       // memory size text alloc
-    int   saved;
-    int   bg;         // bg color
-}DATA_EDITOR;
-
 
 static DATA_EDITOR  *data;
 static char         *str;
@@ -107,8 +82,8 @@ inline char isperator (char ch) {
 	return 0;
 }
 
-void InsertChar (char *string, register int index, int ch) {
-  register int x = strlen(string);
+void app_EditorInsertChar (char *string, register int index, int ch) {
+  register int x = strlen (string);
 
     while (x >= index){
         string[x+1] = string[x];
@@ -345,7 +320,10 @@ int proc_editor (OBJECT *o, int msg, int value) {
         //
         SDL_FillRect (screen, &(SR){ r.x+1, r.y+r.h-LINE_DISTANCE, r.w-2, LINE_DISTANCE}, 0); // BG: LINE: COL:
         DrawHline (screen, r.x+1, r.y+r.h-LINE_DISTANCE, r.x+r.w, COLOR_WHITE);
-        sprintf (buf, "LINE: %d/%d  COL: %d - LEN/SIZE( %d / %d ) | %d = '%c' ", data->line+1, data->line_count, data->col+1, data->len, data->size, data->text[data->pos], data->text[data->pos]);
+        if (data->FileName[0])
+            sprintf (buf, "LINE: %d/%d  COL: %d - LEN/SIZE(%d/%d) | %d('%c' = %d) | FILE: %s", data->line+1, data->line_count, data->col+1, data->len, data->size, data->pos, data->text[data->pos], data->text[data->pos], data->FileName);
+        else
+            sprintf (buf, "LINE: %d/%d  COL: %d - LEN/SIZE(%d/%d) | %d('%c' = %d) | FILE: noname", data->line+1, data->line_count, data->col+1, data->len, data->size, data->pos, data->text[data->pos], data->text[data->pos]);
         DrawText (screen, buf, r.x+5, r.y+r.h-15, COLOR_WHITE);
 
         } break; // case MSG_DRAW:
@@ -429,8 +407,8 @@ int proc_editor (OBJECT *o, int msg, int value) {
         }
         else if (value == SDLK_TAB && data->len < data->size-2) {
             data->saved = 0;
-            InsertChar (data->text, data->pos, ' ');
-            InsertChar (data->text, data->pos, ' ');
+            app_EditorInsertChar (data->text, data->pos, ' ');
+            app_EditorInsertChar (data->text, data->pos, ' ');
             data->col += 2; data->pos += 2; data->len += 2;
         }
         else
@@ -439,7 +417,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
         //-----------------------------------------------------------
         if (data->len < data->size-1 && (value==SDLK_RETURN || (value >= 32 && value <= 126))) {
             if (value==SDLK_RETURN) {
-                InsertChar (data->text, data->pos, '\n');
+                app_EditorInsertChar (data->text, data->pos, '\n');
               // if last line(DISPLAYED)
               //if ( (ED->line_pos*15)+15 >= O->h-12 && (ED->line_pos*15)+15 <= O->h+12 )
               if ( (data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14)
@@ -450,7 +428,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
               data->line++; data->col = 0;
               data->text[ data->pos ] = '\n'; // New line: char 10
             } else {
-                InsertChar (data->text, data->pos, value);
+                app_EditorInsertChar (data->text, data->pos, value);
                 data->col++; if (data->col*8 > r.w-40) data->scroll++;// Increment the CURSOR
             }
 
@@ -526,7 +504,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
                 char *s = selected_text;
                 while (*s) {
                     if (data->len < data->size-1) {
-                        InsertChar (data->text, data->pos, *s);
+                        app_EditorInsertChar (data->text, data->pos, *s);
                         data->len++;
                         data->pos++;
                         data->col++;
@@ -580,7 +558,6 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     data->line_pos = 0;
     data->line_count = 0;
     data->size = size; // memory size text alloc
-//    data->color = COLOR_ORANGE;
     data->bg = 8;
 
     o = app_ObjectNew (proc_editor, x, y, 320, 245, id, OBJECT_TYPE_EDITOR, data);
@@ -589,20 +566,6 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
 
     return o;
 }
-
-char * app_EditorGetText (OBJECT *o) {
-    DATA_EDITOR *data = app_GetData (o);
-    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data)
-        return data->text;
-    return NULL;
-}
-char * app_EditorGetFileName (OBJECT *o) {
-    DATA_EDITOR *data = app_GetData (o);
-    if (app_GetType(o) == OBJECT_TYPE_EDITOR && data)
-        return data->FileName;
-    return NULL;
-}
-
 
 void app_EditorListFunction (OBJECT *o, MENU *menu) {
     DATA_EDITOR *data = app_GetData (o);
