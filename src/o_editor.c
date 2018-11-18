@@ -49,7 +49,7 @@ int C_RED = 12345;
 
 int count;
 
-inline char iswordchar (char ch) {
+char iswordchar (char ch) {
     return isalnum(ch) || ch == '.' || ch == '_';
 }
 
@@ -65,7 +65,7 @@ inline char iswordchar (char ch) {
 //
 //-------------------------------------------------------------------
 //
-inline char isperator (char ch) {
+char isoperator (char ch) {
 
   if (isalnum(ch)) return 0;
 
@@ -251,7 +251,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
                   // CODE FROM: SciTE100 Editor 1.0
                   // If == '(' or ')' or '-' or '+' or ',' or '.' ... etc
-                  if (isperator(*str))
+                  if (isoperator(*str))
                       color = COLOR_WHITE;
 
                     //------- Color RESERVEDs WORDs: Language C -------
