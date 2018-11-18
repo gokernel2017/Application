@@ -58,7 +58,7 @@ void call_button1 (ARG *a) {
     }
 }
 void call_button2 (ARG *a) {
-    char buf[255];
+    char buf[1024];
     int ret;
 
     if (!menu) return;
