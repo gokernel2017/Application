@@ -334,7 +334,7 @@ static void draw_bg (void) {
     SDL_FillRect (screen, &(SR){ 1, hh-20, screen->w-1, 20 }, COLOR_ORANGE);
     SDL_FillRect (screen, &(SR){ 1, hh+hh, screen->w-1, 20 }, COLOR_ORANGE);
 
-    DrawText (screen, "To Exit Press The KEY: F12", 100, (screen->h/2), COLOR_WHITE);
+    DrawText (screen, "To Exit Press The KEY: ESC", 100, (screen->h/2), COLOR_WHITE);
 }
 
 OBJECT * app_ObjectNew (

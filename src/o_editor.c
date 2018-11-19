@@ -9,7 +9,6 @@
 #define LINE_DISTANCE           17
 //#define LINE_DISTANCE           15
 
-//#define SELECTED_TEXT_SIZE  1024 * 4
 #define SELECTED_COLOR      33808
 
 // To state of sintax color
