@@ -99,18 +99,23 @@ void call_button2 (ARG *a) {
     // Find ONLY FILES
     //-------------------------------------------
     dir = opendir(buf);
-    for (;;) {
-        entry = readdir(dir);
-        if (!entry) break;
+    if (dir) {
 
-        if ( !(stat(entry->d_name, &s) == 0 && S_ISDIR(s.st_mode)) ) {
-            if (strstr(entry->d_name, ".tem")) {
-                sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, entry->d_name);
-                app_MenuItenAdd (menu, buf);
+        for (;;) {
+            entry = readdir(dir);
+            if (!entry) break;
+
+            if ( !(stat(entry->d_name, &s) == 0 && S_ISDIR(s.st_mode)) ) {
+                if (strstr(entry->d_name, ".tem")) {
+                    sprintf (buf, "%s%s", EDITOR_TEMPLATE_DIR, entry->d_name);
+                    app_MenuItenAdd (menu, buf);
+                }
             }
-        }
-    }// for (;;)
-    closedir(dir);
+        }// for (;;)
+
+        closedir (dir);
+
+    }// if (dir)
 
     }
 #endif // __linux__
