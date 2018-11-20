@@ -65,6 +65,7 @@ void call_button2 (ARG *a) {
 
     if (!menu) return;
     app_MenuItenClear (menu);
+                app_MenuItenAdd (menu, buf);
 
 #ifdef WIN32
     {
@@ -166,6 +167,78 @@ void call_edit (ARG *a) {
 // Editor Mult Line: CallBack
 //
 void call_editor (ARG *a) {
+    char buf [1024];
+
+    //
+    // CTRL + S: Save the text
+    //
+    if (key_ctrl && a->key == CTRL_KEY_ENTER) {
+        DATA_EDITOR *data = app_GetData(editor);
+        FILE *fp;
+        sprintf (buf, "%scomplete", EDITOR_DIR); // c:\editor\complete  OR  /usr/editor/complete
+        if (data && menu && (fp = fopen(buf, "r"))) {
+            SDL_Rect r;
+            char name[1024];
+            int i = data->pos-1, count = 0;
+            int pos_x, pos_y, ret;
+            int w = menu->w;
+            int h = menu->h;
+            app_GetRect (editor, &r);
+            menu->w = 200; menu->h = 129;
+            app_MenuItenClear (menu);
+            for(;;) {
+                int c = data->text[i];
+                if (i==0) break;
+                if (c<=' ' || c=='(') { i++; break; }
+                i--;
+            }
+            while (i < data->pos) {
+                name[count++] = data->text[i++];
+                if (count >= sizeof(name)) break;
+            }
+            name[count] = 0;
+//            printf ("name(%s)\n", name);
+		        while (fgets(buf, sizeof(buf), fp) != NULL) {
+                if (*buf == *name && strstr(buf, name))
+                    app_MenuItenAdd (menu, buf);
+            }
+            fclose(fp);
+            //-------------------------------------------------------
+            // set menu position: x, y
+            //
+            pos_x = 70+r.x+data->col*8;
+            pos_y = (r.y+data->line_pos*EDITOR_LINE_DISTANCE)+EDITOR_LINE_DISTANCE+3;
+            if (pos_x + menu->w >= screen->w) {
+                pos_x -= menu->w;
+            }
+            if (pos_y + menu->h >= screen->h) {
+                pos_y -= menu->h + EDITOR_LINE_DISTANCE;
+            }
+            //-------------------------------------------------------
+            if ((ret = app_Menu (menu, pos_x, pos_y)) != -1) {
+                MENU_ITEN *iten;
+                if ((iten = app_MenuItenGet (menu, ret)) != NULL) {
+                    char *s = iten->text+strlen(name);
+                    while (*s && *s != '\n') {
+                        if (data->len < data->size-2) {
+                            app_EditorInsertChar (data->text, data->pos, *s);
+                            data->len++;
+                            data->pos++;
+                            data->col++;
+                        }
+                        s++;
+                    }
+                }
+            }
+            menu->w = w; menu->h = h;
+            app_ObjectUpdate (editor);
+        }
+        else {
+            sprintf (buf, "FILE NOT FOUND: '%scomplete'", EDITOR_DIR);
+            app_ShowDialog (buf, DIALOG_OK);
+        }
+    }
+    else
     //
     // CTRL + S: Save the text
     //
@@ -192,12 +265,12 @@ printf ("EDITOR NAME(%s)\n", data->FileName);
             }
         }
     }
+    else
     //
     // CTRL + O: Insert The Text File ( C:\editor\o or /usr/editor/o ) in EDITOR.
     //
     if (key_ctrl && a->key == CTRL_KEY_O) {
         DATA_EDITOR *data = app_GetData (editor);
-        char buf[1024];
         int c;
         FILE *fp;
         sprintf (buf, "%so", EDITOR_DIR);

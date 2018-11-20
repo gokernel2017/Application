@@ -6,7 +6,6 @@
 //
 #include "app.h"
 
-#define LINE_DISTANCE           17
 //#define LINE_DISTANCE           15
 
 #define SELECTED_COLOR      33808
@@ -230,7 +229,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
         //
         while (*str) {
             // size h:
-            if (pos_y > (r.y + r.h)-LINE_DISTANCE)
+            if (pos_y > (r.y + r.h)-EDITOR_LINE_DISTANCE)
           break;
 
             SetTextColor();
@@ -296,7 +295,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
                 data->line_count++;
                 pos_x = (r.x + 70) - data->scroll*8;
-                pos_y += LINE_DISTANCE;
+                pos_y += EDITOR_LINE_DISTANCE;
             }
             
             str++;
@@ -311,14 +310,14 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
 //        if (app_Focused(o)) {
             // draw cursor position
-            DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * LINE_DISTANCE, 9, 14, COLOR_WHITE);
+            DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * EDITOR_LINE_DISTANCE, 9, 14, COLOR_WHITE);
             DrawVline (screen, (r.x+69+data->col*8) -data->scroll*8, r.y+1, r.y+r.h-2, COLOR_WHITE);
 //        }
 
         // display: LINE NUMBER, COL, ...
         //
-        SDL_FillRect (screen, &(SR){ r.x+1, r.y+r.h-LINE_DISTANCE, r.w-2, LINE_DISTANCE}, 0); // BG: LINE: COL:
-        DrawHline (screen, r.x+1, r.y+r.h-LINE_DISTANCE, r.x+r.w, COLOR_WHITE);
+        SDL_FillRect (screen, &(SR){ r.x+1, r.y+r.h-EDITOR_LINE_DISTANCE, r.w-2, EDITOR_LINE_DISTANCE}, 0); // BG: LINE: COL:
+        DrawHline (screen, r.x+1, r.y+r.h-EDITOR_LINE_DISTANCE, r.x+r.w, COLOR_WHITE);
         if (data->FileName[0])
             sprintf (buf, "LINE: %d/%d  COL: %d - LEN/SIZE(%d/%d) | %d('%c' = %d) | FILE: %s", data->line+1, data->line_count, data->col+1, data->len, data->size, data->pos, data->text[data->pos], data->text[data->pos], data->FileName);
         else
@@ -342,7 +341,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
         }
         else if (value == SDLK_DOWN && data->line < data->line_count-1) {
             // if last line(DISPLAYED)
-            if ((data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14)
+            if ((data->line_pos*EDITOR_LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*EDITOR_LINE_DISTANCE)+34 <= r.h+14)
                 data->line_top++;
             else
                 data->line_pos++;
@@ -358,7 +357,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
             if (str[data->pos] == '\n') { // if "current char" = new line
 
                 // if last line(DISPLAYED)
-                if ( (data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14 )
+                if ( (data->line_pos*EDITOR_LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*EDITOR_LINE_DISTANCE)+34 <= r.h+14 )
                     data->line_top++;
                 else
                     data->line_pos++;
@@ -375,16 +374,16 @@ int proc_editor (OBJECT *o, int msg, int value) {
             data->pos++;
         }
         else if (value == SDLK_PAGEUP){ // PAGINA A CIMA: O mesmo que SETA A ACIMA * Numero de LINHAS VISIVEIS
-            for (count=0; count < (r.h/LINE_DISTANCE)-2; count++)
+            for (count=0; count < (r.h/EDITOR_LINE_DISTANCE)-2; count++)
             if (data->line > 0) {
                 if ( data->line_pos > 0 ) data->line_pos--; else data->line_top--;
                 data->line--;
             }
         }
         else if (value == SDLK_PAGEDOWN) {// PAGINA A BAIXO: O mesmo que SETA A BAIXO * Numero de LINHAS VISIVEIS
-            for (count=0; count < (r.h/LINE_DISTANCE)-2; count++)
+            for (count=0; count < (r.h/EDITOR_LINE_DISTANCE)-2; count++)
             if (data->line < data->line_count) {
-                if ( (data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14)
+                if ( (data->line_pos*EDITOR_LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*EDITOR_LINE_DISTANCE)+34 <= r.h+14)
                     data->line_top++;
                 else
                     data->line_pos++;
@@ -419,7 +418,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
                 app_EditorInsertChar (data->text, data->pos, '\n');
               // if last line(DISPLAYED)
               //if ( (ED->line_pos*15)+15 >= O->h-12 && (ED->line_pos*15)+15 <= O->h+12 )
-              if ( (data->line_pos*LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*LINE_DISTANCE)+34 <= r.h+14)
+              if ( (data->line_pos*EDITOR_LINE_DISTANCE)+34 >= r.h-14 && (data->line_pos*EDITOR_LINE_DISTANCE)+34 <= r.h+14)
                   data->line_top++;
               else
                   data->line_pos++;

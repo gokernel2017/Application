@@ -46,6 +46,7 @@ extern "C" {
 
 // CTRL + KEY:
 #define CTRL_KEY_C      3   // CTRL + C
+#define CTRL_KEY_ENTER  10  // CTRL + ENTER
 #define CTRL_KEY_O      15  // CTRL + O
 #define CTRL_KEY_S      19  // CTRL + S
 #define CTRL_KEY_V      22  // CTRL + V
@@ -67,7 +68,8 @@ extern "C" {
 
 #define DIALOG_OK       1
 //
-#define EDITOR_FILE_NAME_SIZE   255
+#define EDITOR_FILE_NAME_SIZE 255
+#define EDITOR_LINE_DISTANCE  17
 
 enum {
     OBJECT_TYPE_OBJECT = 1,
