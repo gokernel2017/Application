@@ -31,42 +31,47 @@ extern "C" {
 //---------------  DEFINE / ENUM  ---------------
 //-----------------------------------------------
 //
-#define LIBIMPORT       extern
-#define BMP             SDL_Surface
+#define LIBIMPORT         extern
+#define BMP               SDL_Surface
 //
-#define COLOR_ORANGE    64512
-#define CONSOLE_BG      8 // blue
-#define SR              struct SDL_Rect
-#define MRGB(r,g,b)     SDL_MapRGB(screen->format, r, g, b)
-#define COLOR_BORDER    11184810
-#define COLOR_PURPURE   12402852
-#define COLOR_WHITE     16777215
-#define COLOR_BLUE2     33237
-#define COLOR_OBG       15724527  // object bg
+#define COLOR_ORANGE      64512
+#define CONSOLE_BG        8 // blue
+#define SR                struct SDL_Rect
+#define MRGB(r,g,b)       SDL_MapRGB(screen->format, r, g, b)
+#define COLOR_BORDER      11184810
+#define COLOR_PURPURE     12402852
+#define COLOR_WHITE       16777215
+#define COLOR_BLUE2       33237
+#define COLOR_OBG         15724527  // object bg
 
 // CTRL + KEY:
-#define CTRL_KEY_C      3   // CTRL + C
-#define CTRL_KEY_ENTER  10  // CTRL + ENTER
-#define CTRL_KEY_O      15  // CTRL + O
-#define CTRL_KEY_S      19  // CTRL + S
-#define CTRL_KEY_V      22  // CTRL + V
+#define CTRL_KEY_C        3   // CTRL + C
+#ifdef WIN32
+  #define CTRL_KEY_ENTER  10  // CTRL + ENTER
+#endif
+#ifdef __linux__
+  #define CTRL_KEY_ENTER  13 // CTRL + ENTER
+#endif
+#define CTRL_KEY_O        15  // CTRL + O
+#define CTRL_KEY_S        19  // CTRL + S
+#define CTRL_KEY_V        22  // CTRL + V
 
 //
 // object send message
-#define MSG_DRAW        1
-#define MSG_KEY         2
-#define MSG_CHAR        3   // fucused object editable
-#define MSG_FOCUS       4   // set focus
-#define MSG_MOUSE_DOWN  5   // click on enter
-#define MSG_MOUSE_UP    6   // click on leave
-#define MSG_ENTER       7   // on mouse enter
-#define MSG_LEAVE       8   // on mouse leave
+#define MSG_DRAW          1
+#define MSG_KEY           2
+#define MSG_CHAR          3   // fucused object editable
+#define MSG_FOCUS         4   // set focus
+#define MSG_MOUSE_DOWN    5   // click on enter
+#define MSG_MOUSE_UP      6   // click on leave
+#define MSG_ENTER         7   // on mouse enter
+#define MSG_LEAVE         8   // on mouse leave
 // "proc_object" return:
-#define RET_REDRAW_ALL  10  // redraw all objects
-#define RET_REDRAW      11  // redraw the current object
-#define RET_CALL        12
+#define RET_REDRAW_ALL    10  // redraw all objects
+#define RET_REDRAW        11  // redraw the current object
+#define RET_CALL          12
 
-#define DIALOG_OK       1
+#define DIALOG_OK         1
 //
 #define EDITOR_FILE_NAME_SIZE 255
 #define EDITOR_LINE_DISTANCE  17

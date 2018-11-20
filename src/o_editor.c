@@ -308,11 +308,9 @@ int proc_editor (OBJECT *o, int msg, int value) {
             str++;
         }
 
-//        if (app_Focused(o)) {
-            // draw cursor position
-            DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * EDITOR_LINE_DISTANCE, 9, 14, COLOR_WHITE);
-            DrawVline (screen, (r.x+69+data->col*8) -data->scroll*8, r.y+1, r.y+r.h-2, COLOR_WHITE);
-//        }
+        // draw cursor position
+        DrawRect (screen,  (r.x+69+data->col*8) -data->scroll*8, r.y+4+data->line_pos * EDITOR_LINE_DISTANCE, 9, 14, COLOR_WHITE);
+        DrawVline (screen, (r.x+69+data->col*8) -data->scroll*8, r.y+1, r.y+r.h-2, COLOR_WHITE);
 
         // display: LINE NUMBER, COL, ...
         //
@@ -331,6 +329,9 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
     case MSG_KEY: {
         int count;
+
+        if (key_ctrl && value == CTRL_KEY_ENTER)
+      return RET_CALL;
 
         if (value == SDLK_UP && data->line > 0) {
             if (data->line_pos > 0)

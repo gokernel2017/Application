@@ -170,9 +170,9 @@ void call_editor (ARG *a) {
     char buf [1024];
 
     //
-    // complete text
+    // CTRL + ENTER: complete text
     //
-    if (a->key == SDLK_F1) {
+    if (key_ctrl && a->key == CTRL_KEY_ENTER) {
         DATA_EDITOR *data = app_GetData(editor);
         FILE *fp;
         sprintf (buf, "%scomplete", EDITOR_DIR); // c:\editor\complete  OR  /usr/editor/complete
