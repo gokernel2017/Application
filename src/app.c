@@ -284,7 +284,7 @@ void app_UpdateGui (OBJECT *o) {
         if ((k = ev.key.keysym.unicode)==0)
             k = ev.key.keysym.sym;
 
-        if (k == SDLK_RCTRL || k == SDLK_LCTRL || k == SDLK_RETURN)
+        if (k == SDLK_RCTRL || k == SDLK_LCTRL)
             key_ctrl = 0;
         if (k == SDLK_RSHIFT || k == SDLK_LSHIFT)
             key_shift = 0;

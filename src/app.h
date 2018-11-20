@@ -45,13 +45,16 @@ extern "C" {
 #define COLOR_OBG         15724527  // object bg
 
 // CTRL + KEY:
+#define CTRL_KEY_A        1   // CTRL + A
 #define CTRL_KEY_C        3   // CTRL + C
+/*
 #ifdef WIN32
   #define CTRL_KEY_ENTER  10  // CTRL + ENTER
 #endif
 #ifdef __linux__
   #define CTRL_KEY_ENTER  13 // CTRL + ENTER
 #endif
+*/
 #define CTRL_KEY_O        15  // CTRL + O
 #define CTRL_KEY_S        19  // CTRL + S
 #define CTRL_KEY_V        22  // CTRL + V

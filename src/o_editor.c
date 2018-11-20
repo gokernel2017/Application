@@ -330,9 +330,6 @@ int proc_editor (OBJECT *o, int msg, int value) {
     case MSG_KEY: {
         int count;
 
-        if (key_ctrl && value == CTRL_KEY_ENTER)
-      return RET_CALL;
-
         if (value == SDLK_UP && data->line > 0) {
             if (data->line_pos > 0)
                 data->line_pos--;
