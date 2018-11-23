@@ -67,6 +67,12 @@ static OBJECT * dialog      = NULL;
 static OBJECT * dlgYES      = NULL;
 static OBJECT * dlgNO       = NULL;
 static OBJECT * dlgOK       = NULL;
+//
+static OBJECT *file_dialog_root;
+static OBJECT *file_dialog;
+static OBJECT *file_dialog_EDIT;
+static OBJECT *file_dialog_OK;
+static OBJECT *file_dialog_CANCEL;
 //-----------------------------------------------
 static OBJECT * root         = NULL; // the root object
 static OBJECT * current      = NULL; // the current object
@@ -473,8 +479,8 @@ static void app_UpdatePos (OBJECT *obj) {
 }
 
 void app_SetSize (OBJECT *o, int w, int h) {
-    o->rect.w = w;
-    o->rect.h = h;
+    if (w > 0) o->rect.w = w;
+    if (h > 0) o->rect.h = h;
 }
 
 void app_SetFocus (OBJECT *o) {
@@ -539,7 +545,6 @@ int app_ShowDialog (char *text, int ok) {
 
     if (dialog_root == NULL) {
         if ((dialog_root = app_ObjectNew (proc_null,0,0,0,0,0,0,NULL)) != NULL) {
-printf ("Criando DIALOG\n");
             dialog_data.fg = COLOR_ORANGE;
             dialog_data.bg = COLOR_WHITE;
             dialog = app_ObjectNew (proc_dialog,(screen->w/2)-250,(screen->h/2)-50,500,100,0,0,&dialog_data);
@@ -600,6 +605,77 @@ printf ("Criando DIALOG\n");
         state = RET_REDRAW_ALL;
         
     }
+
+    return dialog_ret;
+}
+
+void call_edit_file_dialog (ARG *a) {
+    if (a->key == SDLK_RETURN) {
+        dialog_ret = 1;
+        dialog_quit = 1;
+    }
+    else
+    if (a->key == SDLK_ESCAPE) {
+        dialog_ret = 0;
+        dialog_quit = 1;
+    }
+}
+
+int app_FileDialog (char const *title, char path[1024]) {
+    if (file_dialog_root == NULL) {
+        if ((file_dialog_root = app_ObjectNew (proc_null,0,0,0,0,0,0,NULL)) != NULL) {
+            dialog_data.fg = COLOR_ORANGE;
+            dialog_data.bg = COLOR_WHITE;
+            file_dialog = app_ObjectNew (proc_dialog,(screen->w/2)-250,(screen->h/2)-50,500,110,0,0,&dialog_data);
+            app_ObjectAdd (file_dialog_root, file_dialog);
+
+            file_dialog_EDIT = app_NewEdit (file_dialog, 0, 12, 30, "File Name Edit", 1024);
+            file_dialog_OK = app_NewButton (file_dialog, ID_YES, 142, 70, "OK");
+            file_dialog_CANCEL  = app_NewButton (file_dialog, ID_NO,  258, 70, "CANCEL");
+            //
+            app_SetCall (file_dialog_EDIT, call_edit_file_dialog);
+            app_SetCall (file_dialog_OK, call_dialog);
+            app_SetCall (file_dialog_CANCEL, call_dialog);
+            app_SetSize (file_dialog_EDIT, file_dialog->rect.w-27, 0);
+        }
+    }
+
+    if (file_dialog_root && file_dialog) {
+        OBJECT *old_focus;
+
+        app_UpdatePos (file_dialog_root);
+        state = RET_REDRAW_ALL;
+        dialog_ret = 0;
+        dialog_quit = 0;
+
+        if (path)
+            app_EditSetText (file_dialog_EDIT, path);
+
+        if (title && strlen(title) < DIALOG_TEXT_SIZE-1) {
+            sprintf (dialog_data.text, "%s", title);
+        } else {
+            dialog_data.text[0] = 0;
+        }
+
+        current = mouse_find = NULL;
+        old_focus = object_focus; // save object focus
+        app_SetFocus (file_dialog_EDIT);
+
+        while (!dialog_quit) {
+            app_UpdateGui (file_dialog_root);
+            SDL_Delay (10);
+        }
+        key = 0;
+
+        current = mouse_find = NULL;
+        object_focus = old_focus; // restore object focus
+        if (object_focus)
+            app_SetFocus (object_focus);
+        quit = 0;
+        state = RET_REDRAW_ALL;
+    }
+    
+    sprintf (path, "%s", app_EditGetText(file_dialog_EDIT));
 
     return dialog_ret;
 }

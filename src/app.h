@@ -19,8 +19,14 @@
 #define _APP_H_
 
 #include <SDL/SDL.h>
+
 #ifdef WIN32
+    #include "io.h"
     #undef main
+#else
+    #include <sys/stat.h>
+    #include <dirent.h>
+    #include <unistd.h>
 #endif
 
 #ifdef __cplusplus
@@ -42,21 +48,15 @@ extern "C" {
 #define COLOR_PURPURE     12402852
 #define COLOR_WHITE       16777215
 #define COLOR_BLUE2       33237
+#define COLOR_RED         63488
 #define COLOR_OBG         15724527  // object bg
 
 // CTRL + KEY:
 #define CTRL_KEY_A        1   // CTRL + A
 #define CTRL_KEY_C        3   // CTRL + C
-/*
-#ifdef WIN32
-  #define CTRL_KEY_ENTER  10  // CTRL + ENTER
-#endif
-#ifdef __linux__
-  #define CTRL_KEY_ENTER  13 // CTRL + ENTER
-#endif
-*/
 #define CTRL_KEY_O        15  // CTRL + O
 #define CTRL_KEY_S        19  // CTRL + S
+#define CTRL_KEY_Y        25  // CTRL + Y
 #define CTRL_KEY_V        22  // CTRL + V
 
 //
@@ -116,7 +116,7 @@ struct MENU {
     int   top;
     int   pos_y;
     int   count;
-    int   button_h; // button h
+    int   button_h;
     MENU_ITEN *iten_first;
 };
 struct MENU_ITEN {
@@ -175,6 +175,7 @@ LIBIMPORT void      app_SetCall       (OBJECT *o, void (*call) (ARG *arg));
 LIBIMPORT void      app_ObjectAdd     (OBJECT *o, OBJECT *sub);
 LIBIMPORT void      app_ObjectUpdate  (OBJECT *o); // draw and display
 LIBIMPORT int       app_ShowDialog    (char *text, int ok);
+LIBIMPORT int       app_FileDialog    (char const *title, char path[1024]);
 LIBIMPORT int       app_SendMessage   (OBJECT *o, int msg, int value);
 //
 LIBIMPORT OBJECT * app_ObjectNew (
@@ -199,16 +200,16 @@ LIBIMPORT void    app_EditorListFunction (OBJECT *o, MENU *menu);
 LIBIMPORT void    app_EditorFree (OBJECT *o);
 
 // Edit Functions:
+LIBIMPORT void    app_EditSetText (OBJECT *o, char *text);
 LIBIMPORT char  * app_EditGetText (OBJECT *o);
 
 //
 // menu.c
 //
 LIBIMPORT MENU  * app_MenuCreate (int w, int h);
-LIBIMPORT void    app_MenuItenAdd (MENU *m, char *text);
-LIBIMPORT void    app_MenuItenClear (MENU *m);
-LIBIMPORT int     app_Menu (MENU *m, int x, int y);
-LIBIMPORT MENU_ITEN * app_MenuItenGet (MENU *m, int index);
+LIBIMPORT void    app_MenuItenAdd (MENU *menu, char *text);
+LIBIMPORT void    app_MenuItenClear (MENU *menu);
+LIBIMPORT char *  app_Menu (MENU *menu, int x, int y, void (*call) (MENU *menu, char *text));
 
 //
 // draw.c | Drawing Primitive:
