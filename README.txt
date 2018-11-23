@@ -12,6 +12,8 @@
    make
    gcc program.c -o program libapp.a -lSDL -Wall
 
+ Program using Application API:
+   https://github.com/gokernel2017/DreamEditor
 
  BY: Francisco - gokernel@hotmail.com
 
