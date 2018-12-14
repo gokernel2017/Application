@@ -38,7 +38,6 @@ struct OBJECT { // opaque struct
     OBJECT    *first;
     OBJECT    *next;
 };
-
 typedef struct {
     char  text [DIALOG_TEXT_SIZE];
     int   fg;
@@ -102,7 +101,7 @@ static int proc_null (OBJECT *o, int msg, int i) {
 
 int app_Init (int argc, char **argv) {
     static int init = 0;
-    int w = 0, h = 0, flags = SDL_HWSURFACE, i;
+    int w = 0, h = 0, flags = 0, i;
 
     if (init) return 1;
     init = 1;
@@ -233,8 +232,18 @@ void app_UpdateGui (OBJECT *o) {
                 }
                 if (object_click && object_click->vm_call) {
                     id_object = object_click->id;
-                    vm_simule_push_long (MSG_MOUSE_UP);
-                    vm_Run (object_click->vm_call);
+                    if (main_vm) {
+                        vm_Reset(main_vm);
+                        emit_begin(main_vm);
+                        //-------------------------------------------
+                        emit_push_long (main_vm, MSG_MOUSE_UP);
+                        emit_call_vm (main_vm, object_click->vm_call, 1, TYPE_NO_RETURN);
+                        //-------------------------------------------
+                        emit_end (main_vm);
+                        vm_Run (main_vm);
+                    }
+//                    vm_simule_push_long (MSG_MOUSE_UP);
+//                    vm_Run (object_click->vm_call);
                 }
             }
             object_click = NULL;
@@ -297,8 +306,10 @@ void app_UpdateGui (OBJECT *o) {
         state = 0;
         if (o == root)
             draw_bg ();
+        o->proc (o,MSG_DRAW,0);
         app_ObjectDrawAll (o);
-        SDL_Flip (screen);
+        //SDL_Flip (screen);
+        SDL_UpdateRect (screen, 0, 0, screen->w, screen->h);
     }
 
 }// app_UpdateGui ()
@@ -314,12 +325,9 @@ void app_Run (void (*call) (void)) {
     quit = 0;
 
     while (!quit) {
-
         app_UpdateGui (root);
         CallBack ();
-
     }
-printf ("saindo app_run....\n");
 }
 
 static void draw_bg (void) {
@@ -365,6 +373,10 @@ OBJECT * app_ObjectNew (
     o->next = NULL;
     o->data = data;
     return o;
+}
+
+OBJECT * app_GetRoot (void) {
+    return root;
 }
 
 void * app_GetData (OBJECT *o) {
@@ -742,4 +754,47 @@ void app_ObjectSetTop (OBJECT *o) {
 //    state = RET_REDRAW_ALL;
 
 }//END: AS_win_set_top()
+
+int proc_draw_dialog (OBJECT *o, int msg, int value) {
+    if (msg == MSG_DRAW) {
+        SDL_FillRect (screen, &(SR){o->x, o->y, o->rect.w, o->rect.h }, COLOR_WHITE);
+        DrawRect (screen, o->x, o->y, o->rect.w, o->rect.h, COLOR_ORANGE); // border
+    }
+    return 0;
+}
+
+OBJECT * app_DialogNew (int x, int y, int w, int h) {
+    OBJECT *o;
+    if ((o = app_ObjectNew (proc_draw_dialog,x,y,w,h,0,OBJECT_TYPE_DIALOG,NULL)) != NULL) {
+    }
+    return o;
+}
+
+void app_DialogRun (OBJECT *o, char *title) {
+    if (o && title && app_GetType(o) == OBJECT_TYPE_DIALOG) {
+        OBJECT *old_focus;
+        int ret = 0;
+        key = 0;
+        state = RET_REDRAW_ALL;
+        current = mouse_find = NULL;
+        old_focus = object_focus; // save object focus
+        app_SetFocus (o);
+
+        while (!ret) {
+            app_UpdateGui (o);
+            if (key == SDLK_ESCAPE) {
+                ret = app_ShowDialog (title, 0);
+                state = RET_REDRAW_ALL;
+printf ("RET: %d\n", ret);
+                key = 0;
+            }
+            SDL_Delay (10);
+        }
+        key = 0;
+        current = mouse_find = NULL;
+        object_focus = old_focus; // restore object focus
+        if (object_focus)
+            app_SetFocus (object_focus);
+    }
+}
 

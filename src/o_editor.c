@@ -36,7 +36,7 @@
 #define C_PRE_PROC              2016
 #define C_WORD                  2047
 
-static VM *vm;
+VM *main_vm = NULL;
 
 //static DATA_EDITOR  *data;
 static char         *str;
@@ -193,13 +193,13 @@ static void SetTextColor (void) {
 
 int proc_editor (OBJECT *o, int msg, int value) {
     DATA_EDITOR *data = app_GetData (o);
-
+/*
     if (data==NULL) {
 //        printf ("Editor Data NOT FOUND\n");
 //        printf ("data ponteiro %p\n", &data);
         return 0;
     }
-
+*/
     str = data->text;
     app_GetRect (o, &r);
 
@@ -344,10 +344,10 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
         // CTRL + R
         if (key_ctrl && keysym == 'r') {
-            if (vm) {
+            if (main_vm) {
                 LEXER lexer;
-                if (app_LangParse (&lexer, vm, data->text, "EDITOR") == 0) {
-                    vm_Run(vm);
+                if (app_LangParse (&lexer, main_vm, data->text, "EDITOR") == 0) {
+                    vm_Run(main_vm);
                 }
                 else app_ShowDialog (ErroGet(), DIALOG_OK);
             }
@@ -612,8 +612,12 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
 
     app_ObjectAdd (parent, o);
 
-    if (vm == NULL) {
-        vm = app_LangInit (VM_DEFAULT_SIZE);
+    if (main_vm == NULL) {
+        if ((main_vm = app_LangInit(VM_DEFAULT_SIZE))) {
+            printf ("OBJECT EDITOR: VM (Virtual Machine) Created !!!\n");
+        } else {
+            printf ("OBJECT EDITOR: VM (Virtual Machine) NOT FOUND ... SORRY.\n");
+        }
     }
 
     return o;
