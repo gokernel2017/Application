@@ -38,7 +38,6 @@
 
 VM *main_vm = NULL;
 
-//static DATA_EDITOR  *data;
 static char         *str;
 static SDL_Rect     r;
 static int          state, color;
@@ -206,7 +205,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
     switch (msg) {
 
     case MSG_DRAW: {
-        char buf[50];
+        char buf[1024];
         int line_top = 0, i = 1;
         int pos_x = (r.x + 70) - data->scroll*8;
         int pos_y = r.y + 5;
@@ -217,6 +216,7 @@ int proc_editor (OBJECT *o, int msg, int value) {
 
         data->line_count = 0;
         state = STATE_DEFAULT;
+        color = C_DEFAULT;
 
         //-------------------------------
         // Get the FIRST char DISPLAYED
@@ -294,13 +294,14 @@ int proc_editor (OBJECT *o, int msg, int value) {
                 } // if (state == STATE_DEFAULT)
 
                 DrawChar (screen, *str, pos_x, pos_y, color);
-            }
+
+            }// if (pos_x < r.x+r.w-8)
             pos_x += 8;
 
             if (*str == '\n') { // <-- New line
                 // draw lines numbers
                 sprintf (buf, "%04d", data->line_top + i); i++;
-                DrawText (screen, buf, r.x+4, pos_y, COLOR_ORANGE);
+								DrawText (screen, buf, r.x+4, pos_y, COLOR_ORANGE);
 
                 data->line_count++;
                 pos_x = (r.x + 70) - data->scroll*8;
@@ -581,9 +582,15 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     if ((data = (DATA_EDITOR*)malloc(sizeof(DATA_EDITOR))) == NULL)
   return NULL;
 
-    data->text = (char*) malloc (size);
+    if ((data->text = malloc(size))==NULL) {
+        printf ("ERRO: OBJECT EDITOR | text not allocated\n");
+        return NULL;
+    } else {
+        printf ("OBJECT EDITOR | text allocated\n");
+    }
     data->len = 0;
     if (text) {
+/*
         int i = 0;
         while (text[i]) {
             if (i >= size-2) break;
@@ -593,8 +600,13 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
         data->text[i] = 0;
         data->len = i;
         data->saved = 1;
+*/
+        data->len = strlen(text);
+        strcpy (data->text, text);
     } else {
-        data->text[0] = 0;
+        data->text[0] = ' ';
+        data->text[1] = 0;
+        data->text[2] = 0;
     }
 
     data->FileName[0] = 0;
@@ -605,6 +617,13 @@ OBJECT * app_NewEditor (OBJECT *parent, int id, int x, int y, char *text, int si
     data->line_top = 0;
     data->line_pos = 0;
     data->line_count = 0;
+    data->saved = 1;
+    //
+    data->line_ini = 0;
+    data->line_len = 0;
+    data->sel_start = 0;  // text selected ... WHITH SHIFT KEY
+    data->sel_len = 0;
+    //
     data->size = size; // memory size text alloc
     data->bg = 8;
 

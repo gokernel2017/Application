@@ -39,7 +39,7 @@ struct OBJECT { // opaque struct
     OBJECT    *next;
 };
 typedef struct {
-    char  text [DIALOG_TEXT_SIZE];
+    char  text [DIALOG_TEXT_SIZE+1];
     int   fg;
     int   bg;
 }DATA_DIALOG;
@@ -63,6 +63,13 @@ int mx, my; // mouse_x, mouse_y
 static int running = 0, id_object;
 DATA_DIALOG dialog_data;
 
+//-----------------------------------------------
+static OBJECT * root         = NULL; // the main root object
+static OBJECT * current      = NULL; // the current object
+static OBJECT * mouse_find   = NULL; // object on mouse
+static OBJECT * object_focus = NULL; // focused object
+static OBJECT * object_click = NULL;
+//-----------------------------------------------
 // Dialog:
 //-----------------------------------------------
 static OBJECT * dialog_root = NULL;
@@ -76,12 +83,6 @@ static OBJECT *file_dialog;
 static OBJECT *file_dialog_EDIT;
 static OBJECT *file_dialog_OK;
 static OBJECT *file_dialog_CANCEL;
-//-----------------------------------------------
-static OBJECT * root         = NULL; // the root object
-static OBJECT * current      = NULL; // the current object
-static OBJECT * mouse_find   = NULL; // object on mouse
-static OBJECT * object_focus = NULL; // focused object
-static OBJECT * object_click = NULL;
 //-----------------------------------------------
 
 static int
@@ -101,7 +102,7 @@ static int proc_null (OBJECT *o, int msg, int i) {
 
 int app_Init (int argc, char **argv) {
     static int init = 0;
-    int w = 0, h = 0, flags = 0, i;
+    int w = 800, h = 600, i, flags = 0;
 
     if (init) return 1;
     init = 1;
@@ -118,7 +119,6 @@ int app_Init (int argc, char **argv) {
             h = atoi(argv[i+1]);
         if (!strcmp(argv[i], "-noframe"))
            flags |= SDL_NOFRAME;
-
     }
     if (w <= 0) w = 800;
     if (h <= 0) h = 600;
@@ -195,7 +195,6 @@ void app_UpdateGui (OBJECT *o) {
         my = ev.button.y;
 
         if (current) {
-
             //
             // set object clicked ... to use in event: SDL_MOUSEBUTTONUP.
             //
@@ -242,8 +241,6 @@ void app_UpdateGui (OBJECT *o) {
                         emit_end (main_vm);
                         vm_Run (main_vm);
                     }
-//                    vm_simule_push_long (MSG_MOUSE_UP);
-//                    vm_Run (object_click->vm_call);
                 }
             }
             object_click = NULL;
@@ -264,7 +261,7 @@ void app_UpdateGui (OBJECT *o) {
         }
         else
         if (key == SDLK_ESCAPE && o == root) {
-            quit = app_ShowDialog("Application API - Exit ?", 0);
+            quit = app_ShowDialog ("Application API - Exit ?", 0);
         }
 
         // !!!!!!! To Linux !!!!!!!
@@ -302,7 +299,7 @@ void app_UpdateGui (OBJECT *o) {
     }// switch (ev.type)
     }// while (SDL_PollEvent(&ev))
 
-    if (state==RET_REDRAW_ALL) {
+    if (state == RET_REDRAW_ALL) {
         state = 0;
         if (o == root)
             draw_bg ();
@@ -394,14 +391,13 @@ int app_GetType (OBJECT *o) {
     return o->type;    
 }
 
-
 int app_Focused (OBJECT *o) {
     return o->focus;
 }
 
 void app_ObjectAdd (OBJECT *o, OBJECT *sub) {
 
-    if (o==NULL) o = root;
+    if (o == NULL) o = root;
 
     if (o && sub) {
         sub->parent = o;
@@ -511,11 +507,11 @@ void app_SetCall (OBJECT *o, void (*call) (int msg)) {
     if (o)
         o->call = call;
 }
+
 void app_SetCallVM (OBJECT *o, VM *vm) {
     if (o && vm)
         o->vm_call = vm;
 }
-
 
 void app_SetVisible (OBJECT *o, int visible) {
     o->visible = visible;
@@ -596,7 +592,7 @@ int app_ShowDialog (char *text, int ok) {
             dlgNO->visible = 1;
         }
 
-        if (text && strlen(text) < DIALOG_TEXT_SIZE-1) {
+        if (text && strlen(text) < DIALOG_TEXT_SIZE) {
             sprintf (dialog_data.text, "%s", text);
         } else {
             dialog_data.text[0] = 0;
@@ -669,7 +665,7 @@ int app_FileDialog (char const *title, char path[1024]) {
         if (path)
             app_EditSetText (file_dialog_EDIT, path);
 
-        if (title && strlen(title) < DIALOG_TEXT_SIZE-1) {
+        if (title && strlen(title) < DIALOG_TEXT_SIZE) {
             sprintf (dialog_data.text, "%s", title);
         } else {
             dialog_data.text[0] = 0;
@@ -710,7 +706,7 @@ char * app_FileOpen (const char *FileName) {
         fseek(fp, 0, SEEK_SET);
 
         str = (char *)malloc (size + 5);
-        if(!str){
+        if (!str) {
             fclose (fp);
             return NULL;
         }
@@ -718,8 +714,6 @@ char * app_FileOpen (const char *FileName) {
         fclose(fp);
         str[i] = 0;
         str[i+1] = 0;
-
-printf ("FileOpen STR ponteiro %p = %d\n", &str, (int)str);
 
         return str;
     }
@@ -767,6 +761,7 @@ OBJECT * app_DialogNew (int x, int y, int w, int h) {
     OBJECT *o;
     if ((o = app_ObjectNew (proc_draw_dialog,x,y,w,h,0,OBJECT_TYPE_DIALOG,NULL)) != NULL) {
     }
+		printf ("Application API: Creating Dialog ( DialogNew() )\n");
     return o;
 }
 
@@ -785,7 +780,6 @@ void app_DialogRun (OBJECT *o, char *title) {
             if (key == SDLK_ESCAPE) {
                 ret = app_ShowDialog (title, 0);
                 state = RET_REDRAW_ALL;
-printf ("RET: %d\n", ret);
                 key = 0;
             }
             SDL_Delay (10);
