@@ -69,6 +69,20 @@ case OP_PUSH_STRING: {
     sp->s = s;
     } continue;
 
+case OP_PUSH_ARG: {
+    UCHAR i = (UCHAR)vm->code[vm->ip++];
+    sp++;
+    sp[0] = vm->arg[i];
+    } continue;
+
+case OP_PUSH_LOCAL: {
+    UCHAR i = (UCHAR)(vm->code[vm->ip++]);
+    if (vm->local) {
+        sp++;
+        sp[0] = vm->local[i].value;
+    }
+    } continue;
+
 case OP_POP_VAR: {
     UCHAR i = (UCHAR)vm->code[vm->ip++];
     switch (Gvar[i].type) {
@@ -78,9 +92,29 @@ case OP_POP_VAR: {
     sp--;
     } continue;
 
-case OP_INC_LONG: {
+case OP_POP_LOCAL: {
+    UCHAR i = (UCHAR)vm->code[vm->ip++];
+    vm->local[i].value = sp[0];
+    sp--;
+    } continue;
+
+case OP_INC_VAR_LONG: {
 		Gvar [ (UCHAR)(vm->code[vm->ip++]) ].value.l++;
     } continue;
+
+case OP_INC_LOCAL_LONG: {
+		vm->local[ (UCHAR)(vm->code[vm->ip++]) ].value.l++;
+    }
+    continue;
+
+case OP_DEC_VAR_LONG: {
+		Gvar [ (UCHAR)(vm->code[vm->ip++]) ].value.l--;
+    } continue;
+
+case OP_DEC_LOCAL_LONG: {
+		vm->local[ (UCHAR)(vm->code[vm->ip++]) ].value.l--;
+    }
+    continue;
 
 case OP_MUL_LONG: sp[-1].l *= sp[0].l; sp--; continue;
 case OP_DIV_LONG: sp[-1].l /= sp[0].l; sp--; continue;
@@ -257,7 +291,8 @@ case OP_CALL_VM: {
     VM *local = *(void**)(vm->code+vm->ip);
     vm->ip += sizeof(void*);
     UCHAR arg_count = (UCHAR)(vm->code[vm->ip++]); //printf ("CALL ARG_COUNT = %d\n", arg_count);
-    UCHAR return_type = (UCHAR)(vm->code[vm->ip++]);
+//    UCHAR return_type = (UCHAR)(vm->code[vm->ip++]);
+		vm->ip++;
 
     switch (arg_count) {
     case 1: local->arg[0] = sp[0]; sp--; break;
@@ -327,6 +362,7 @@ case OP_HALT:
     vm->ip = 0;
     //printf ("VM sp: %d\n", (int)(sp - stack));
     return sp;
+
     }// switch (vm->code[vm->ip++])
     }// for (;;)
 
@@ -450,14 +486,45 @@ void emit_push_var (VM *vm, UCHAR i) {
     *vm->p++ = OP_PUSH_VAR;
     *vm->p++ = i;
 }
+
+void emit_push_arg (VM *vm, UCHAR i) {
+    *vm->p++ = OP_PUSH_ARG;
+    *vm->p++ = i;
+}
+
+void emit_push_local (VM *vm, UCHAR i) {
+    *vm->p++ = OP_PUSH_LOCAL;
+    *vm->p++ = i;
+}
+
 void emit_pop_var (VM *vm, UCHAR i) {
     *vm->p++ = OP_POP_VAR;
     *vm->p++ = i;
 }
 
-void emit_inc_long (VM *vm, UCHAR index) {
-    *vm->p++ = OP_INC_LONG;
-    *vm->p++ = index;
+void emit_pop_local (VM *vm, UCHAR i) {
+    *vm->p++ = OP_POP_LOCAL;
+    *vm->p++ = i;
+}
+
+void emit_inc_var_long (VM *vm, UCHAR c) {
+    *vm->p++ = OP_INC_VAR_LONG;
+    *vm->p++ = c;
+}
+
+void emit_inc_local_long (VM *vm, UCHAR c) {
+    *vm->p++ = OP_INC_LOCAL_LONG;
+    *vm->p++ = c;
+}
+
+void emit_dec_var_long (VM *vm, UCHAR c) {
+    *vm->p++ = OP_DEC_VAR_LONG;
+    *vm->p++ = c;
+}
+
+void emit_dec_local_long (VM *vm, UCHAR c) {
+    *vm->p++ = OP_DEC_LOCAL_LONG;
+    *vm->p++ = c;
 }
 
 void emit_mul_long (VM *vm) {
@@ -473,8 +540,17 @@ void emit_sub_long (VM *vm) {
     *vm->p++ = OP_SUB_LONG;
 }
 
+void emit_mul_float (VM *vm) {
+    *vm->p++ = OP_MUL_FLOAT;
+}
+void emit_div_float (VM *vm) {
+    *vm->p++ = OP_DIV_FLOAT;
+}
 void emit_add_float (VM *vm) {
     *vm->p++ = OP_ADD_FLOAT;
+}
+void emit_sub_float (VM *vm) {
+    *vm->p++ = OP_SUB_FLOAT;
 }
 
 void emit_pop_eax (VM *vm) {

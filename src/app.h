@@ -284,10 +284,13 @@ LIBIMPORT void      app_DialogRun (OBJECT *o, char *title);
 //
 LIBIMPORT VM    * app_LangInit    (unsigned int size);
 LIBIMPORT int     app_LangParse   (LEXER *l, VM *vm, char *text, char *name);
-LIBIMPORT void    CreateVarLong   (char *name, int value);
+LIBIMPORT void    CreateVarLong   (char *name, long l);
+LIBIMPORT void 		CreateVarFloat 	(char *name, float f);
 LIBIMPORT void    CreateVarOBJECT (char *name);
 LIBIMPORT TFunc * FuncFind        (char *name);
 LIBIMPORT int     VarFind         (char *name);
+LIBIMPORT int 		ArgumentFind		(char *name);
+LIBIMPORT int 		LocalFind				(char *name);
 // erro:
 LIBIMPORT void    Erro            (char *format, ...);
 LIBIMPORT char  * ErroGet         (void);
